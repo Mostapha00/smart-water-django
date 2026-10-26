@@ -1,0 +1,47 @@
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}AquaMind{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{% static 'aquamind.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+<nav class="navbar navbar-expand-md border-bottom bg-body">
+  <div class="container-xl">
+    <a class="navbar-brand fw-semibold" href="/">AquaMind</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Menu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      {% if user.is_authenticated %}
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="{% url 'infrastructure:site_list' %}">Sites</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'infrastructure:work_list' %}">Interventions</a></li>
+        <li class="nav-item"><span class="nav-link disabled" title="Module de Student 2">Consommation</span></li>
+        <li class="nav-item"><span class="nav-link disabled" title="Module de Student 3">Qualité &amp; fuites</span></li>
+        <li class="nav-item"><span class="nav-link disabled" title="Module de Student 4">Durabilité</span></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2">
+        <span class="small text-body-secondary">{{ user.get_username }}</span>
+        {% if user.is_staff %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'admin:index' %}">Admin</a>{% endif %}
+        <form method="post" action="{% url 'logout' %}" class="m-0">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">Déconnexion</button></form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+<main class="container-xl py-4">
+  {% for message in messages %}
+  <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show" role="alert">
+    {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+  </div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

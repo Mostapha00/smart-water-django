@@ -1,0 +1,102 @@
+/* Maquette 3D du site — styles scopés sous .aq3d */
+.aq3d {
+  --bg: #eef3f6; --surface: #ffffff; --fg: #12232e; --muted: #587080; --line: #d3dee5;
+  --accent: #0a6e8a; --water: #1aa3d9; --scene: #e3ecf0;
+  --ground: #cfdce3; --zone: #b3c8d1; --grass: #a7c9a0; --tree: #4f8f60;
+  --wall: #f4f7f8; --roof: #6f8794; --glass: #2f4c5c; --tech: #7a4fc4;
+  --ok: #1f8a5b; --warn: #c98a12; --crit: #c4402f; --none: #9aa9b2;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  display: flex; flex-direction: column; gap: 14px; color: var(--fg);
+}
+.aq3d [hidden] { display: none !important; }
+.aq3d header.site { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.aq3d .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.aq3d h1 { font-weight: 700; font-size: clamp(22px, 3vw, 30px); margin: 4px 0 0; }
+.aq3d .facts { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 0; }
+.aq3d .facts div { display: flex; flex-direction: column; }
+.aq3d .facts dt { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
+.aq3d .facts dd { margin: 0; font-weight: 600; }
+.aq3d .controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.aq3d .ctl { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.aq3d .ctl > span { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.aq3d button:not(.btn) { font-size: 12.5px; font-weight: 500; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+.aq3d button:not(.btn):hover { border-color: var(--accent); }
+.aq3d button:disabled { opacity: .45; cursor: not-allowed; }
+.aq3d .seg { display: inline-flex; }
+.aq3d .seg button { border-radius: 0; }
+.aq3d .seg button + button { border-left: 0; }
+.aq3d .seg button:first-child { border-radius: 6px 0 0 6px; }
+.aq3d .seg button:last-child { border-radius: 0 6px 6px 0; }
+.aq3d button[aria-pressed="true"], .aq3d button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.aq3d .check { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; cursor: pointer; }
+.aq3d .check input { accent-color: var(--accent); }
+.aq3d .main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.aq3d .left { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.aq3d .stage { position: relative; background: var(--scene); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; height: min(66vh, 620px); min-height: 400px; }
+.aq3d .stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.aq3d .stage.editing { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.aq3d .labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.aq3d .lbl { position: absolute; transform: translate(-50%, -100%); white-space: nowrap; font-family: var(--mono); font-size: 11px; color: var(--fg); background: rgba(255,255,255,.88); border: 1px solid var(--line); padding: 1px 6px; border-radius: 3px; display: inline-flex; align-items: center; gap: 4px; }
+.aq3d .lbl.zone { font-family: inherit; font-weight: 600; font-size: 13px; }
+.aq3d .lbl.sel { border-color: var(--accent); color: var(--accent); }
+.aq3d .lbl.dim { opacity: .35; }
+.aq3d .lbl.inc { color: var(--crit); border-color: var(--crit); }
+.aq3d .lbl.wrench { padding: 2px 4px; color: var(--warn); border-color: var(--warn); }
+.aq3d .lbl.wrench svg, .aq3d .legend svg { width: 13px; height: 13px; }
+.aq3d .lbl.tech { color: var(--tech); border-color: var(--tech); }
+.aq3d .hint { position: absolute; bottom: 10px; left: 10px; right: 10px; font-size: 12px; color: var(--muted); pointer-events: none; }
+.aq3d .hint span { background: rgba(255,255,255,.85); padding: 3px 8px; border-radius: 4px; }
+.aq3d .scenario { position: absolute; left: 12px; right: 12px; bottom: 12px; max-width: 520px; background: var(--surface); border: 1px solid var(--accent); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.18); }
+.aq3d .scenario .steps { display: flex; gap: 6px; }
+.aq3d .scenario .steps i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+.aq3d .scenario .steps i.on { background: var(--accent); }
+.aq3d .scenario h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.aq3d .scenario p { margin: 0; font-size: 13px; }
+.aq3d .scenario .scn-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin: 0; }
+.aq3d .timeline { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.aq3d .timeline label { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.aq3d .timeline input { width: 100%; accent-color: var(--accent); }
+.aq3d .timeline output { font-family: var(--mono); font-size: 13px; min-width: 11ch; text-align: right; }
+.aq3d aside { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.aq3d .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.aq3d .panel h2 { font-weight: 600; font-size: 17px; margin: 0; }
+.aq3d .panel h3 { font-weight: 600; font-size: 14px; margin: 4px 0 0; }
+.aq3d .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.aq3d .panel-head .kind { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.aq3d .legend { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.aq3d .legend li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.aq3d .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; display: inline-block; }
+.aq3d .dot.ok { background: var(--ok); } .aq3d .dot.warn { background: var(--warn); } .aq3d .dot.crit { background: var(--crit); } .aq3d .dot.none { background: var(--none); } .aq3d .dot.water { background: var(--water); }
+.aq3d .sq { width: 10px; height: 10px; border-radius: 2px; flex: none; display: inline-block; background: var(--accent); }
+.aq3d .eq-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.aq3d .eq-list button { width: 100%; display: grid; grid-template-columns: 10px minmax(0,1fr) auto; align-items: center; gap: 8px; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 7px 2px; font-size: 13px; }
+.aq3d .eq-list li:first-child button { border-top: 0; }
+.aq3d .eq-list button:hover .ref, .aq3d .eq-list button[aria-current="true"] .ref { color: var(--accent); }
+.aq3d .eq-list .ref { font-family: var(--mono); font-size: 12px; }
+.aq3d .eq-list .sub { color: var(--muted); font-size: 12px; }
+.aq3d .eq-list .val { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.aq3d .card-empty, .aq3d .note { color: var(--muted); font-size: 12.5px; margin: 0; }
+.aq3d .msg { font-size: 12.5px; color: var(--ok); margin: 0; }
+.aq3d .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; align-self: flex-start; }
+.aq3d .status.ok { color: var(--ok); } .aq3d .status.warn { color: var(--warn); } .aq3d .status.crit { color: var(--crit); } .aq3d .status.none { color: var(--muted); }
+.aq3d .kv { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 4px 12px; margin: 0; font-size: 13px; }
+.aq3d .kv dt { color: var(--muted); font-weight: 400; }
+.aq3d .kv dd { margin: 0; font-family: var(--mono); font-size: 12.5px; text-align: right; overflow-wrap: anywhere; }
+.aq3d .risk-bar { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.aq3d .risk-bar span { display: block; height: 100%; border-radius: 4px; }
+.aq3d .works { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.aq3d .works li { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2px 8px; font-size: 12.5px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+.aq3d .works .ref { font-family: var(--mono); }
+.aq3d .works .sub { color: var(--muted); grid-column: 1 / -1; }
+.aq3d .spark { width: 100%; height: auto; display: block; }
+.aq3d .spark text { font-family: var(--mono); font-size: 9px; fill: var(--muted); }
+.aq3d details.json { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+.aq3d details.json summary { cursor: pointer; font-weight: 600; }
+.aq3d details.json pre { overflow-x: auto; font-size: 12px; background: var(--bg); padding: 12px; border-radius: 6px; margin: 8px 0 0; max-height: 440px; }
+.aq3d .err { padding: 24px; color: var(--crit); }
+@media (max-width: 900px) {
+  .aq3d .main { grid-template-columns: minmax(0, 1fr); }
+  .aq3d #detail { display: none; }
+  .aq3d #detail.open { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1040; max-height: 62vh; overflow-y: auto; border-radius: 14px 14px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.25); padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .aq3d .stage { height: 58vh; min-height: 340px; }
+}

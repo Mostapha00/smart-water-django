@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="h3">Supprimer {{ object }} ?</h1>
+<p class="text-body-secondary">Cette action est définitive.{% if object.zones %} Les zones du site seront aussi supprimées.{% endif %}</p>
+<form method="post" class="d-flex gap-2">{% csrf_token %}
+  <button class="btn btn-danger">Supprimer</button>
+  <a class="btn btn-outline-secondary" href="{{ object.get_absolute_url }}">Annuler</a>
+</form>
+{% endblock %}

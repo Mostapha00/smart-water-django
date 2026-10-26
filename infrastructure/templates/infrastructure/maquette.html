@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Maquette 3D · {{ site.name }}{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'infrastructure/maquette.css' %}">{% endblock %}
+{% block content %}
+<div class="aq3d" id="maquette-root" data-url="{% url 'infrastructure:site_maquette_json' site.pk %}">
+  <header class="site">
+    <div>
+      <div class="eyebrow" id="site-code">Site · {{ site.code }}</div>
+      <h1 id="site-name">{{ site.name }}</h1>
+    </div>
+    <dl class="facts" id="site-facts"></dl>
+    <a class="btn btn-sm btn-outline-secondary align-self-start" href="{{ site.get_absolute_url }}">Fiche du site</a>
+  </header>
+
+  <div class="controls">
+    <div class="ctl"><span>Couleur</span>
+      <div class="seg" role="group" aria-label="Couleur selon">
+        <button type="button" id="mode-status" aria-pressed="true">Statut</button>
+        <button type="button" id="mode-risk" aria-pressed="false">Risque 30 j</button>
+      </div>
+    </div>
+    <div class="ctl"><span>Afficher</span>
+      <div class="seg" role="group" aria-label="Type d'équipement">
+        <button type="button" data-type="all" aria-pressed="true">Tout</button>
+        <button type="button" data-type="pipe" aria-pressed="false">Canalisations</button>
+        <button type="button" data-type="pump" aria-pressed="false">Pompes</button>
+      </div>
+      <label class="check"><input type="checkbox" id="f-risk"> Risque élevé seulement</label>
+    </div>
+    <div class="ctl">
+      <button type="button" id="btn-xray" aria-pressed="true">Vue souterraine</button>
+      <button type="button" id="btn-flow" aria-pressed="true">Flux d'eau</button>
+      <button type="button" id="btn-edit" aria-pressed="false">Déplacer les zones</button>
+      <button type="button" id="btn-reset">Recentrer</button>
+    </div>
+    <div class="ctl"><button type="button" class="primary" id="btn-scn">Scénario : fuite</button></div>
+  </div>
+
+  <div class="main">
+    <div class="left">
+      <div class="stage" id="stage">
+        <div class="labels" id="labels"></div>
+        <div class="hint" id="hint"><span>Glisser pour tourner · molette pour zoomer · cliquer une zone, un équipement ou un compteur</span></div>
+        <div class="scenario" id="scenario" hidden></div>
+      </div>
+      <div class="timeline" id="timeline">
+        <label for="tl">Date</label>
+        <input type="range" id="tl" min="0" max="0" step="1" value="0">
+        <output id="tl-out" for="tl">Aujourd'hui</output>
+      </div>
+    </div>
+    <aside>
+      <section class="panel" id="detail" aria-live="polite"></section>
+      <section class="panel"><h2 id="legend-title">Statut</h2><ul class="legend" id="legend"></ul></section>
+      <section class="panel"><h2>Équipements du site</h2><ul class="eq-list" id="eq-list"></ul></section>
+    </aside>
+  </div>
+
+  <details class="json">
+    <summary>Données JSON reçues de Django</summary>
+    <p>Réponse de <code>{% url 'infrastructure:site_maquette_json' site.pk %}</code>. Les compteurs (Student 2) et les incidents (Student 3) apparaissent dès que leurs modèles existent.</p>
+    <pre id="json-src">Chargement…</pre>
+  </details>
+</div>
+{% csrf_token %}
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="{% static 'infrastructure/maquette.js' %}"></script>
+{% endblock %}

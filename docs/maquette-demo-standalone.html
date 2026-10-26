@@ -1,0 +1,1055 @@
+<title>AquaMind Site 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: site header, control bar, 3D maquette + timeline beside an inspector column; inspector becomes a bottom sheet on phones. */
+:root {
+  --bg: #eef3f6; --surface: #ffffff; --fg: #12232e; --muted: #587080; --line: #d3dee5;
+  --accent: #0a6e8a; --water: #1aa3d9; --scene: #e3ecf0;
+  --ground: #cfdce3; --zone: #b3c8d1; --grass: #a7c9a0; --tree: #4f8f60;
+  --wall: #f4f7f8; --roof: #6f8794; --glass: #2f4c5c; --tech: #7a4fc4;
+  --ok: #1f8a5b; --warn: #c98a12; --crit: #c4402f;
+  --f-display: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d171d; --surface: #13212a; --fg: #e3edf2; --muted: #8aa3b1; --line: #263a46;
+    --accent: #45b3d1; --water: #5cc8f0; --scene: #0f1c23;
+    --ground: #1c2e37; --zone: #2a4552; --grass: #2f5a3c; --tree: #4f8a5e;
+    --wall: #9fb3bd; --roof: #4d6672; --glass: #0e1a21; --tech: #a585e6;
+    --ok: #3fbf86; --warn: #e3a93a; --crit: #ec6a57; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d171d; --surface: #13212a; --fg: #e3edf2; --muted: #8aa3b1; --line: #263a46;
+  --accent: #45b3d1; --water: #5cc8f0; --scene: #0f1c23;
+  --ground: #1c2e37; --zone: #2a4552; --grass: #2f5a3c; --tree: #4f8a5e;
+  --wall: #9fb3bd; --roof: #4d6672; --glass: #0e1a21; --tech: #a585e6;
+  --ok: #3fbf86; --warn: #e3a93a; --crit: #ec6a57; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 14px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 32px;
+}
+.wrap { max-width: 1320px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+header.site { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.eyebrow { font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(24px, 3.4vw, 34px); line-height: 1.1; margin: 4px 0 0; text-wrap: balance; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 0; }
+.facts div { display: flex; flex-direction: column; }
+.facts dt { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.facts dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.demo-tag { font-family: var(--f-mono); font-size: 11px; padding: 3px 8px; border: 1px dashed var(--muted); border-radius: 4px; color: var(--muted); align-self: flex-start; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.ctl { display: flex; align-items: center; gap: 6px; }
+.ctl > span { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+button { font: 500 12.5px var(--f-body); color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.seg { display: inline-flex; }
+.seg button { border-radius: 0; }
+.seg button + button { border-left: 0; }
+.seg button:first-child { border-radius: 6px 0 0 6px; }
+.seg button:last-child { border-radius: 0 6px 6px 0; }
+button[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.check { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; cursor: pointer; }
+button.primary { background: var(--accent); color: var(--surface); border-color: var(--accent); font-weight: 600; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.left { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.stage { position: relative; background: var(--scene); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; height: min(66vh, 620px); min-height: 400px; }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.stage.editing { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.lbl { position: absolute; transform: translate(-50%, -100%); white-space: nowrap; font-family: var(--f-mono); font-size: 11px; color: var(--fg); background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid var(--line); padding: 1px 6px; border-radius: 3px; display: inline-flex; align-items: center; gap: 4px; }
+.lbl.zone { font-family: var(--f-display); font-weight: 600; font-size: 13px; }
+.lbl.sel { border-color: var(--accent); color: var(--accent); }
+.lbl.dim { opacity: .35; }
+.lbl.inc { color: var(--crit); border-color: var(--crit); font-weight: 500; }
+.lbl.wrench { padding: 2px 4px; color: var(--warn); border-color: var(--warn); }
+.lbl.wrench svg { width: 13px; height: 13px; }
+.lbl.tech { color: var(--tech); border-color: var(--tech); }
+.hint { position: absolute; bottom: 10px; left: 10px; right: 10px; font-size: 12px; color: var(--muted); pointer-events: none; }
+.hint span { background: color-mix(in srgb, var(--surface) 85%, transparent); padding: 3px 8px; border-radius: 4px; }
+
+.scenario { position: absolute; left: 12px; right: 12px; bottom: 12px; max-width: 520px; background: var(--surface); border: 1px solid var(--accent); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.18); }
+.scenario .steps { display: flex; gap: 6px; }
+.scenario .steps i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+.scenario .steps i.on { background: var(--accent); }
+.scenario h3 { margin: 0; font-family: var(--f-display); font-size: 16px; }
+.scenario p { margin: 0; font-size: 13px; color: var(--fg); max-width: 62ch; }
+.scenario .row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+
+.timeline { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.timeline label { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.timeline input { width: 100%; accent-color: var(--accent); }
+.timeline output { font-family: var(--f-mono); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; min-width: 11ch; text-align: right; }
+
+aside { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.panel h2 { font-family: var(--f-display); font-weight: 600; font-size: 17px; margin: 0; }
+.panel h3 { font-family: var(--f-display); font-weight: 600; font-size: 14px; margin: 4px 0 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.panel-head .kind { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.close-btn { padding: 3px 8px; font-size: 12px; }
+.legend { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.legend li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; display: inline-block; }
+.dot.ok { background: var(--ok); } .dot.warn { background: var(--warn); } .dot.crit { background: var(--crit); }
+.legend svg { width: 12px; height: 12px; }
+.check input { accent-color: var(--accent); }
+.dot.water { background: var(--water); } .dot.tech { background: var(--tech); }
+.sq { width: 10px; height: 10px; border-radius: 2px; flex: none; display: inline-block; background: var(--accent); }
+
+.eq-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.eq-list button { width: 100%; display: grid; grid-template-columns: 10px minmax(0,1fr) auto; align-items: center; gap: 8px; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 7px 2px; color: var(--fg); font: 13px var(--f-body); }
+.eq-list li:first-child button { border-top: 0; }
+.eq-list li[hidden] { display: none; }
+.eq-list button:hover .ref, .eq-list button[aria-current="true"] .ref { color: var(--accent); }
+.eq-list .ref { font-family: var(--f-mono); font-size: 12px; }
+.eq-list .sub { color: var(--muted); font-size: 12px; }
+.eq-list .val { font-family: var(--f-mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); }
+
+.card-empty { color: var(--muted); font-size: 13px; margin: 0; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; align-self: flex-start; }
+.status.ok { color: var(--ok); } .status.warn { color: var(--warn); } .status.crit { color: var(--crit); } .status.neutral { color: var(--muted); }
+.kv { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 4px 12px; margin: 0; font-size: 13px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-family: var(--f-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; }
+.risk-bar { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.risk-bar span { display: block; height: 100%; border-radius: 4px; }
+.note { color: var(--muted); font-size: 12px; margin: 0; }
+.msg { font-size: 12.5px; color: var(--ok); margin: 0; }
+.works { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.works li { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2px 8px; font-size: 12.5px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+.works .ref { font-family: var(--f-mono); }
+.works .sub { color: var(--muted); grid-column: 1 / -1; }
+.works button { padding: 2px 8px; font-size: 12px; }
+form.mw { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+form.mw label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+form.mw input, form.mw select, form.mw textarea { font: 13px var(--f-body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+form.mw .xor { font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
+form.mw .row { display: flex; gap: 8px; justify-content: flex-end; }
+.spark { width: 100%; height: auto; display: block; }
+.spark text { font-family: var(--f-mono); font-size: 9px; fill: var(--muted); }
+
+details.json { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+details.json summary { cursor: pointer; font-family: var(--f-display); font-weight: 600; font-size: 15px; }
+details.json p { color: var(--muted); max-width: 72ch; margin: 8px 0; }
+details.json pre { overflow-x: auto; font-family: var(--f-mono); font-size: 12px; background: var(--bg); padding: 12px; border-radius: 6px; margin: 0; max-height: 440px; }
+.err { padding: 24px; color: var(--crit); }
+
+@media (max-width: 900px) {
+  .main { grid-template-columns: minmax(0, 1fr); }
+  #detail { display: none; }
+  #detail.open {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; max-height: 62vh; overflow-y: auto;
+    border-radius: 14px 14px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.25);
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .stage { height: 58vh; min-height: 340px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="site">
+    <div>
+      <div class="eyebrow" id="site-code">Site</div>
+      <h1 id="site-name">Chargement…</h1>
+    </div>
+    <dl class="facts" id="site-facts"></dl>
+    <span class="demo-tag">Données de démonstration</span>
+  </header>
+
+  <div class="controls">
+    <div class="ctl"><span>Couleur</span>
+      <div class="seg" role="group" aria-label="Couleur selon">
+        <button type="button" id="mode-status" aria-pressed="true">Statut</button>
+        <button type="button" id="mode-risk" aria-pressed="false">Risque 30 j</button>
+      </div>
+    </div>
+    <div class="ctl"><span>Afficher</span>
+      <div class="seg" role="group" aria-label="Type d'équipement">
+        <button type="button" data-type="all" aria-pressed="true">Tout</button>
+        <button type="button" data-type="pipe" aria-pressed="false">Canalisations</button>
+        <button type="button" data-type="pump" aria-pressed="false">Pompes</button>
+      </div>
+      <label class="check"><input type="checkbox" id="f-risk"> Risque élevé seulement</label>
+    </div>
+    <div class="ctl">
+      <button type="button" id="btn-xray" aria-pressed="true">Vue souterraine</button>
+      <button type="button" id="btn-flow" aria-pressed="true">Flux d'eau</button>
+      <button type="button" id="btn-edit" aria-pressed="false">Déplacer les zones</button>
+      <button type="button" id="btn-reset">Recentrer</button>
+    </div>
+    <div class="ctl"><button type="button" class="primary" id="btn-scn">Scénario : fuite à l'école</button></div>
+  </div>
+
+  <div class="main">
+    <div class="left">
+      <div class="stage" id="stage">
+        <div class="labels" id="labels"></div>
+        <div class="hint" id="hint"><span>Glisser pour tourner · molette pour zoomer · cliquer une zone, un équipement ou un compteur</span></div>
+        <div class="scenario" id="scenario" hidden></div>
+      </div>
+      <div class="timeline">
+        <label for="tl">Date</label>
+        <input type="range" id="tl" min="0" max="9" step="1" value="9">
+        <output id="tl-out" for="tl">Aujourd'hui</output>
+      </div>
+    </div>
+
+    <aside>
+      <section class="panel" id="detail" aria-live="polite"></section>
+      <section class="panel">
+        <h2 id="legend-title">Statut</h2>
+        <ul class="legend" id="legend"></ul>
+      </section>
+      <section class="panel">
+        <h2>Équipements du site</h2>
+        <ul class="eq-list" id="eq-list"></ul>
+      </section>
+    </aside>
+  </div>
+
+  <details class="json">
+    <summary>Données envoyées par Django (JSON)</summary>
+    <p>La vue Django renvoie ce JSON à partir des modèles <code>Site</code>, <code>WaterZone</code>, <code>WaterPipe</code>, <code>WaterPump</code> et <code>MaintenanceWork</code>, plus les compteurs (Student 2) et les incidents (Student 3). Si une zone n'a pas de <code>pos_x</code>/<code>pos_y</code>, la maquette la place automatiquement. Ce bloc se met à jour quand vous déplacez une zone ou créez une intervention.</p>
+    <pre id="json-src"></pre>
+  </details>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+// In Django: set DATA_URL to the JSON view, e.g. "/infrastructure/sites/1/maquette.json". Null = embedded demo data.
+const DATA_URL = null;
+
+const DEMO_DATA = {
+  site: { id: 1, code: "SIT-MNB-001", name: "École primaire Ennour", site_type: "École", governorate: "Manouba", address: "Rue des Jasmins, Den Den" },
+  technicians: [{ id: 1, name: "Tarek Ben Salah" }, { id: 2, name: "Sana Jlassi" }],
+  zones: [
+    { id: 1, code: "Z-01", name: "Bloc pédagogique", usage: "Sanitaires", service_pressure_bar: 2.8, kind: "building", floors: 2, roof: "flat", pos_x: null, pos_y: null },
+    { id: 2, code: "Z-02", name: "Cantine", usage: "Cuisine", service_pressure_bar: 3.0, kind: "building", floors: 1, roof: "gable", pos_x: null, pos_y: null },
+    { id: 3, code: "Z-03", name: "Jardin", usage: "Irrigation", service_pressure_bar: 2.2, kind: "garden", pos_x: null, pos_y: null }
+  ],
+  meters: [
+    { serial_number: "CPT-01", zone: 1, customer_category: "Établissement scolaire", forecast_m3: 98, horizon_days: 30,
+      readings: [["2025-12-31", 4120], ["2026-01-31", 4215], ["2026-02-28", 4305], ["2026-03-31", 4403], ["2026-04-30", 4505], ["2026-05-31", 4593], ["2026-06-30", 4633], ["2026-07-31", 4645], ["2026-08-31", 4655], ["2026-09-30", 4751]] },
+    { serial_number: "CPT-02", zone: 2, customer_category: "Établissement scolaire", forecast_m3: 60, horizon_days: 30,
+      readings: [["2025-12-31", 2210], ["2026-01-31", 2270], ["2026-02-28", 2328], ["2026-03-31", 2391], ["2026-04-30", 2452], ["2026-05-31", 2507], ["2026-06-30", 2527], ["2026-07-31", 2531], ["2026-08-31", 2534], ["2026-09-30", 2593]] },
+    { serial_number: "CPT-03", zone: 3, customer_category: "Établissement scolaire", forecast_m3: 215, horizon_days: 30,
+      readings: [["2025-12-31", 8800], ["2026-01-31", 8920], ["2026-02-28", 9030], ["2026-03-31", 9170], ["2026-04-30", 9335], ["2026-05-31", 9520], ["2026-06-30", 9745], ["2026-07-31", 10000], ["2026-08-31", 10250], ["2026-09-30", 10660]] }
+  ],
+  equipment: [
+    { type: "pipe", reference: "CND-001", zone: 1, role: "main", installation_date: "2015-09-01", material: "PEHD", length_m: 42, diameter_mm: 63,
+      history: [["2026-01-31", "en_service", 0.06], ["2026-10-25", "en_service", 0.08]] },
+    { type: "pipe", reference: "CND-002", zone: 1, installation_date: "2015-09-01", material: "PVC", length_m: 25, diameter_mm: 40,
+      history: [["2026-01-31", "en_service", 0.10], ["2026-10-25", "en_service", 0.12]] },
+    { type: "pipe", reference: "CND-003", zone: 2, installation_date: "1998-03-10", material: "Acier galvanisé", length_m: 18, diameter_mm: 32,
+      history: [["2026-01-31", "en_service", 0.30], ["2026-06-02", "a_surveiller", 0.44], ["2026-10-25", "a_surveiller", 0.46]] },
+    { type: "pipe", reference: "CND-004", zone: 3, installation_date: "2009-04-22", material: "PEHD", length_m: 30, diameter_mm: 50,
+      history: [["2026-01-31", "en_service", 0.35], ["2026-05-31", "en_service", 0.48], ["2026-08-31", "en_service", 0.58], ["2026-10-01", "en_service", 0.71]] },
+    { type: "pump", reference: "PMP-01", zone: 1, installation_date: "2018-01-15", power_kw: 2.2, rated_flow_m3_h: 6, efficiency_pct: 68,
+      history: [["2026-01-31", "en_service", 0.20], ["2026-04-09", "en_service", 0.14], ["2026-10-25", "en_service", 0.18]] },
+    { type: "pump", reference: "PMP-02", zone: 3, installation_date: "2011-05-30", power_kw: 1.5, rated_flow_m3_h: 10, efficiency_pct: 52,
+      history: [["2026-01-31", "en_service", 0.42], ["2026-06-30", "a_surveiller", 0.61], ["2026-09-27", "en_panne", 0.83]] }
+  ],
+  works: [
+    { reference: "MW-2026-012", pipe: null, pump: "PMP-01", technician: 1, maintenance_type: "preventive", scheduled_at: "2026-04-09", completed_at: "2026-04-09", cost_tnd: 180, work_summary: "Contrôle annuel, remplacement du joint." },
+    { reference: "MW-2026-019", pipe: "CND-003", pump: null, technician: 1, maintenance_type: "corrective", scheduled_at: "2026-06-02", completed_at: "2026-06-03", cost_tnd: 420, work_summary: "Reprise d'un raccord corrodé." },
+    { reference: "MW-2026-027", pipe: null, pump: "PMP-02", technician: 2, maintenance_type: "corrective", scheduled_at: "2026-09-27", completed_at: null, cost_tnd: null, work_summary: "Moteur ne démarre plus." }
+  ],
+  incidents: [
+    { reference: "LI-2026-014", meter: "CPT-03", trigger_reading: "2026-09-30", rule: "Consommation > 140 % de la moyenne des 3 mois précédents", technician: 2,
+      suspected_pipe: "CND-004", suspected_pump: null, position_on_pipe: 0.62, status: "investigation", opened_at: "2026-10-01", resolved_at: null,
+      description: "Hausse de 410 m³ en septembre au jardin, sans changement d'arrosage déclaré." }
+  ]
+};
+
+const TIMELINE = ["2026-01-31", "2026-02-28", "2026-03-31", "2026-04-30", "2026-05-31", "2026-06-30", "2026-07-31", "2026-08-31", "2026-09-30", "2026-10-25"];
+const TODAY = "2026-10-25";
+const STATUS = { en_service: { label: "En service", tone: "ok" }, a_surveiller: { label: "À surveiller", tone: "warn" }, en_panne: { label: "En panne", tone: "crit" } };
+const INC_STATUS = { investigation: "En investigation", resolved: "Résolu" };
+const MW_TYPE = { preventive: "Préventive", corrective: "Corrective" };
+const TONE_RANK = { ok: 0, warn: 1, crit: 2 };
+const riskTone = r => r < 0.3 ? "ok" : r < 0.6 ? "warn" : "crit";
+const fmtDate = d => d ? new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" }) : "Aucune";
+const fmtMonth = d => new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { month: "short" });
+const pct = r => Math.round(r * 100) + " %";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const WRENCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3 17.8V21h3.2l6.3-6.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.4-.4-.4-2.4z"/></svg>';
+
+async function loadData() {
+  if (DATA_URL) {
+    try { const r = await fetch(DATA_URL, { headers: { Accept: "application/json" } }); if (r.ok) return await r.json(); } catch (e) { /* fall back */ }
+  }
+  return JSON.parse(JSON.stringify(DEMO_DATA));
+}
+
+loadData().then(start);
+
+function start(DATA) {
+const stage = document.getElementById("stage");
+const labelsEl = document.getElementById("labels");
+if (typeof THREE === "undefined" || !THREE.OrbitControls) {
+  stage.innerHTML = '<p class="err">La bibliothèque 3D n\'a pas pu être chargée. Rechargez la page.</p>';
+  return;
+}
+
+// ---------- UI state ----------
+const ui = { colorMode: "status", type: "all", highRisk: false, focusZone: null, sel: null, flowOn: !reduceMotion, xray: true, edit: false, t: TIMELINE.length - 1 };
+let scn = null; // { step, techStart, arrived }
+let workSeq = 32;
+const date = () => scn ? TODAY : TIMELINE[ui.t];
+
+// ---------- Domain helpers (mirror model methods) ----------
+const zoneById = id => DATA.zones.find(z => z.id === id);
+const eqByRef = ref => DATA.equipment.find(e => e.reference === ref);
+const meterBySerial = s => DATA.meters.find(m => m.serial_number === s);
+const techName = id => (DATA.technicians.find(t => t.id === id) || {}).name || "Non assigné";
+
+function eqState(eq) {
+  const d = date();
+  let h = eq.history[0];
+  for (const x of eq.history) if (x[0] <= d) h = x;
+  let status = h[1];
+  if (scn && eq.reference === "CND-004") status = (scn.step === 2 || (scn.step === 3 && !scn.arrived)) ? "a_surveiller" : status;
+  return { status, risk: h[2] };
+}
+function toneOf(eq) { const s = eqState(eq); return ui.colorMode === "status" ? STATUS[s.status].tone : riskTone(s.risk); }
+
+function readingsOf(m) {
+  const d = date();
+  const r = m.readings.filter(x => x[0] <= d);
+  if (scn && scn.step === 4 && m.serial_number === "CPT-03") r.push(["2026-10-25", 10660 + 178]);
+  return r;
+}
+function monthly(m) { // calculate_volume(): index difference between consecutive readings
+  const r = readingsOf(m), out = [];
+  for (let i = 1; i < r.length; i++) out.push({ d: r[i][0], m3: r[i][1] - r[i - 1][1] });
+  return out;
+}
+function isSpike(series, i) { // same logic as the AlertRule in the demo incident
+  if (i < 3) return false;
+  const avg = (series[i - 1].m3 + series[i - 2].m3 + series[i - 3].m3) / 3;
+  return series[i].m3 > 1.4 * avg;
+}
+function lastCons(zoneId) {
+  const m = DATA.meters.find(x => x.zone === zoneId);
+  if (!m) return 0;
+  const s = monthly(m);
+  return s.length ? s[s.length - 1].m3 : 0;
+}
+function allWorks() {
+  const list = DATA.works.slice();
+  if (scn && scn.step >= 3) list.push({ reference: "MW-2026-031", pipe: "CND-004", pump: null, technician: 2, maintenance_type: "corrective", scheduled_at: TODAY, completed_at: (scn.step === 4 || scn.arrived) ? TODAY : null, cost_tnd: (scn.step === 4 || scn.arrived) ? 260 : null, work_summary: "Remplacement de 2 m de PEHD fissuré (scénario)." });
+  return list;
+}
+function worksFor(ref) { return allWorks().filter(w => w.pipe === ref || w.pump === ref).filter(w => w.scheduled_at <= date()); }
+function openWork(ref) { const d = date(); return worksFor(ref).find(w => !w.completed_at || w.completed_at > d); }
+function activeIncidents() {
+  const d = date();
+  return DATA.incidents.filter(i => {
+    if (scn) return i.reference === "LI-2026-014" ? (scn.step === 2 || (scn.step === 3 && !scn.arrived)) : false;
+    return i.opened_at <= d && (!i.resolved_at || i.resolved_at > d);
+  });
+}
+function incidentStatus(i) { return activeIncidents().includes(i) ? "investigation" : "resolved"; }
+function eqVisible(eq) {
+  if (ui.type !== "all" && eq.type !== ui.type) return false;
+  if (ui.highRisk && eqState(eq).risk < 0.6) return false;
+  return true;
+}
+function zoneWorst(zoneId) {
+  let w = "ok";
+  DATA.equipment.filter(e => e.zone === zoneId && e.role !== "main").forEach(e => { const t = toneOf(e); if (TONE_RANK[t] > TONE_RANK[w]) w = t; });
+  if (activeIncidents().some(i => (eqByRef(i.suspected_pipe) || {}).zone === zoneId)) w = "crit";
+  return w;
+}
+
+// ---------- Header ----------
+document.getElementById("site-code").textContent = "Site · " + DATA.site.code;
+document.getElementById("site-name").textContent = DATA.site.name;
+document.getElementById("site-facts").innerHTML = [["Type", DATA.site.site_type], ["Gouvernorat", DATA.site.governorate], ["Zones", DATA.zones.length], ["Équipements", DATA.equipment.length], ["Compteurs", DATA.meters.length]]
+  .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("");
+const jsonEl = document.getElementById("json-src");
+const refreshJSON = () => { jsonEl.textContent = JSON.stringify(DATA, null, 2); };
+
+// ---------- Three.js setup ----------
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 500);
+const HOME = { pos: new THREE.Vector3(20, 22, 28), target: new THREE.Vector3(0, 0, 0) };
+camera.position.copy(HOME.pos);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI * 0.47;
+controls.minDistance = 8; controls.maxDistance = 80;
+controls.target.copy(HOME.target);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 0.55));
+const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+sun.position.set(14, 26, 12);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -24, right: 24, top: 24, bottom: -24 });
+scene.add(sun);
+
+const std = (o = {}) => new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.8 }, o));
+const M = {
+  ground: std({ roughness: 1, transparent: true }), wall: std({ roughness: 0.7, transparent: true }), roof: std({ roughness: 0.6, transparent: true }),
+  glass: std({ roughness: 0.2, metalness: 0.3, transparent: true }), grass: std({ roughness: 1, transparent: true }), tree: std({ transparent: true }),
+  entry: std({ roughness: 0.4, metalness: 0.2 }), water: new THREE.MeshBasicMaterial(), tech: std({ roughness: 0.5 }),
+  incident: new THREE.MeshBasicMaterial({ transparent: true }), ring: new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide })
+};
+const zoneMats = {}; // per zone (pad tint + dim)
+const eqMats = {};   // per equipment
+
+function applyTheme() {
+  scene.background = new THREE.Color(css("--scene"));
+  M.ground.color.set(css("--ground")); M.wall.color.set(css("--wall")); M.roof.color.set(css("--roof"));
+  M.glass.color.set(css("--glass")); M.grass.color.set(css("--grass")); M.tree.color.set(css("--tree"));
+  M.entry.color.set(css("--accent")); M.water.color.set(css("--water")); M.tech.color.set(css("--tech"));
+  M.incident.color.set(css("--crit")); M.ring.color.set(css("--crit"));
+  paint();
+}
+
+// ---------- Static scene: ground + entry ----------
+const GW = 38, GD = 26;
+const ground = new THREE.Mesh(new THREE.BoxGeometry(GW, 0.3, GD), M.ground);
+ground.position.y = -0.15;
+ground.receiveShadow = true;
+scene.add(ground);
+const ENTRY_Z = 10.5, PY = -0.7, ZW = 8, ZD = 7;
+const entry = new THREE.Group();
+const box = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1, 1.2), M.entry); box.position.y = 0.5; box.castShadow = true;
+const dial = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.08, 20), M.wall); dial.rotation.x = Math.PI / 2; dial.position.set(0, 0.6, 0.62);
+entry.add(box, dial); entry.position.set(0, 0, ENTRY_Z); scene.add(entry);
+
+// ---------- Zones (groups so they can be moved) ----------
+const zoneGroups = {}, zonePads = [], pickables = [];
+const zoneX = i => (i - (DATA.zones.length - 1) / 2) * (ZW + 3);
+DATA.zones.forEach((z, i) => {
+  if (z.pos_x == null || z.pos_y == null) { z.pos_x = zoneX(i); z.pos_y = -4; } // automatic layout
+  const g = new THREE.Group();
+  g.position.set(z.pos_x, 0, z.pos_y);
+  const zm = zoneMats[z.id] = std({ roughness: 0.9, transparent: true });
+  const pad = new THREE.Mesh(new THREE.BoxGeometry(ZW, 0.2, ZD), zm);
+  pad.position.y = 0.1; pad.receiveShadow = true;
+  pad.userData = { kind: "zone", id: z.id };
+  g.add(pad); zonePads.push(pad); pickables.push(pad);
+  if (z.kind === "building") buildBuilding(g, z); else buildGarden(g);
+  scene.add(g);
+  zoneGroups[z.id] = g;
+});
+
+function buildBuilding(g, z) {
+  const w = ZW - 1.6, d = 4.4, h = z.floors * 1.6 + 0.2, cz = -0.9;
+  const walls = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M.wall);
+  walls.position.set(0, 0.2 + h / 2, cz); walls.castShadow = true; walls.receiveShadow = true;
+  g.add(walls);
+  const winGeo = new THREE.BoxGeometry(0.7, 0.6, 0.06);
+  for (let f = 0; f < z.floors; f++) {
+    for (let k = -2; k <= 2; k++) {
+      if (f === 0 && k === 0) continue;
+      const wdw = new THREE.Mesh(winGeo, M.glass);
+      wdw.position.set(k * 1.25, 0.2 + 0.95 + f * 1.6, cz + d / 2 + 0.02);
+      g.add(wdw);
+    }
+  }
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.3, 0.06), M.roof);
+  door.position.set(0, 0.2 + 0.65, cz + d / 2 + 0.02); g.add(door);
+  if (z.roof === "gable") {
+    const s = new THREE.Shape(); s.moveTo(-w / 2 - 0.25, 0); s.lineTo(w / 2 + 0.25, 0); s.lineTo(0, 1.3); s.lineTo(-w / 2 - 0.25, 0);
+    const rg = new THREE.ExtrudeGeometry(s, { depth: d + 0.5, bevelEnabled: false });
+    const roof = new THREE.Mesh(rg, M.roof);
+    roof.position.set(0, 0.2 + h, cz - (d + 0.5) / 2); roof.castShadow = true; g.add(roof);
+  } else {
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, 0.18, d + 0.3), M.roof);
+    slab.position.set(0, 0.2 + h + 0.09, cz); slab.castShadow = true; g.add(slab);
+    const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.9, 18), M.wall);
+    tank.position.set(w / 2 - 0.9, 0.2 + h + 0.63, cz - 0.8); tank.castShadow = true; g.add(tank);
+  }
+}
+function buildGarden(g) {
+  const lawn = new THREE.Mesh(new THREE.BoxGeometry(ZW - 0.8, 0.06, ZD - 2.4), M.grass);
+  lawn.position.set(0, 0.23, -0.9); g.add(lawn);
+  [[-3, -2.8], [-1.2, -3], [0.8, -2.6], [2.8, -2.9], [-2.4, -0.6], [-0.2, -1], [2, -0.4]].forEach(([x, z], k) => {
+    const hgt = 1.1 + (k % 3) * 0.35;
+    const t = new THREE.Mesh(new THREE.ConeGeometry(0.5, hgt, 8), M.tree);
+    t.position.set(x, 0.26 + hgt / 2, z); t.castShadow = true; g.add(t);
+  });
+  for (let k = -3; k <= 3; k++) {
+    const hed = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.35, 0.35), M.tree);
+    hed.position.set(k * 1.05, 0.38, 1.0); g.add(hed);
+  }
+}
+
+// ---------- Equipment: pumps (inside zone groups) ----------
+const eqMeshes = {}; // ref -> [meshes]
+function eqMat(ref) { return eqMats[ref] || (eqMats[ref] = std({ roughness: 0.35, metalness: 0.25, transparent: true })); }
+const pumpsPerZone = {}, pumpObj = new Map();
+DATA.equipment.filter(e => e.type === "pump").forEach(eq => {
+  const g = zoneGroups[eq.zone];
+  const n = pumpsPerZone[eq.zone] = (pumpsPerZone[eq.zone] || 0) + 1;
+  const p = new THREE.Group();
+  const mat = eqMat(eq.reference);
+  const base = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.25, 0.9), mat); base.position.y = 0.13;
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 1, 18), mat); body.rotation.z = Math.PI / 2; body.position.y = 0.68;
+  const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.6, 18), mat); motor.position.y = 1.2;
+  [base, body, motor].forEach(m => { m.castShadow = true; m.userData = { kind: "eq", id: eq.reference }; p.add(m); pickables.push(m); });
+  p.position.set(2.2 + (n - 1) * -1.6, 0.2, ZD / 2 - 1.2);
+  g.add(p);
+  eqMeshes[eq.reference] = [base, body, motor];
+  pumpObj.set(eq.reference, p);
+});
+
+// ---------- Meters (Student 2) ----------
+const meterObjs = {};
+const meterMats = {};
+DATA.meters.forEach(m => {
+  const g = zoneGroups[m.zone];
+  const mat = meterMats[m.serial_number] = std({ roughness: 0.4, metalness: 0.2, transparent: true });
+  const grp = new THREE.Group();
+  const post = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.7, 0.45), mat); post.position.y = 0.35;
+  const face = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.05, 18), M.wall); face.rotation.x = Math.PI / 2; face.position.set(0, 0.45, 0.24);
+  [post, face].forEach(o => { o.castShadow = true; o.userData = { kind: "meter", id: m.serial_number }; grp.add(o); pickables.push(o); });
+  grp.position.set(-1.1, 0.2, ZD / 2 - 0.7);
+  g.add(grp);
+  meterObjs[m.serial_number] = grp;
+});
+
+// ---------- Pipes (underground, rounded elbows), rebuilt when zones move ----------
+let pipeObjs = []; // { eq, mesh, curve }
+function roundedCurve(raw, rc) {
+  const pts = raw.filter((p, i) => i === 0 || p.distanceTo(raw[i - 1]) > 1e-3);
+  const path = new THREE.CurvePath();
+  let cur = pts[0].clone();
+  for (let i = 1; i < pts.length - 1; i++) {
+    const p = pts[i], a = pts[i - 1], b = pts[i + 1];
+    const da = a.clone().sub(p), db = b.clone().sub(p);
+    const r = Math.min(rc, da.length() / 2, db.length() / 2);
+    const p1 = p.clone().addScaledVector(da.normalize(), r), p2 = p.clone().addScaledVector(db.normalize(), r);
+    if (cur.distanceTo(p1) > 1e-3) path.add(new THREE.LineCurve3(cur.clone(), p1));
+    path.add(new THREE.QuadraticBezierCurve3(p1, p.clone(), p2));
+    cur = p2;
+  }
+  const last = pts[pts.length - 1];
+  if (cur.distanceTo(last) > 1e-3) path.add(new THREE.LineCurve3(cur, last.clone()));
+  return path;
+}
+function routeFor(eq) {
+  const fronts = DATA.zones.map(z => z.pos_y + ZD / 2 - 0.4);
+  const J = Math.min(ENTRY_Z - 2.2, Math.max(...fronts) + 2);
+  if (eq.role === "main") return [new THREE.Vector3(0, 0.4, ENTRY_Z), new THREE.Vector3(0, PY, ENTRY_Z), new THREE.Vector3(0, PY, J)];
+  const z = zoneById(eq.zone);
+  const zf = z.pos_y + ZD / 2 - 0.4;
+  return [new THREE.Vector3(0, PY, J), new THREE.Vector3(z.pos_x, PY, J), new THREE.Vector3(z.pos_x, PY, zf), new THREE.Vector3(z.pos_x, 0.45, zf)];
+}
+function buildPipes() {
+  pipeObjs.forEach(o => { scene.remove(o.mesh); o.mesh.geometry.dispose(); const i = pickables.indexOf(o.mesh); if (i >= 0) pickables.splice(i, 1); });
+  pipeObjs = [];
+  DATA.equipment.filter(e => e.type === "pipe").forEach(eq => {
+    const curve = roundedCurve(routeFor(eq), 0.7);
+    const r = 0.09 + eq.diameter_mm / 300;
+    const geo = new THREE.TubeGeometry(curve, Math.max(40, Math.round(curve.getLength() * 6)), r, 12, false);
+    const mesh = new THREE.Mesh(geo, eqMat(eq.reference));
+    mesh.castShadow = true;
+    mesh.userData = { kind: "eq", id: eq.reference };
+    scene.add(mesh); pickables.push(mesh);
+    eqMeshes[eq.reference] = [mesh];
+    pipeObjs.push({ eq, mesh, curve, r });
+  });
+  buildFlow();
+  placeIncidents();
+}
+
+// ---------- Water flow: one InstancedMesh, speed from consumption ----------
+const MAX_P = 500;
+const flowMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(0.11, 8, 6), M.water, MAX_P);
+flowMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+scene.add(flowMesh);
+let particles = [];
+function buildFlow() {
+  particles = [];
+  pipeObjs.forEach(o => {
+    const len = o.curve.getLength();
+    const n = Math.max(3, Math.round(len / 1.6));
+    for (let k = 0; k < n && particles.length < MAX_P; k++) particles.push({ o, u0: k / n, len });
+  });
+}
+function flowSpeed(o) { // m³ of last month -> scene units per second
+  const c = o.eq.role === "main" ? DATA.zones.reduce((s, z) => s + lastCons(z.id), 0) : lastCons(o.eq.zone);
+  return c <= 0 ? 0 : 0.4 + c / 70;
+}
+const _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _zero = new THREE.Matrix4().makeScale(0, 0, 0);
+function updateFlow(t) {
+  const speeds = new Map(pipeObjs.map(o => [o, flowSpeed(o)]));
+  for (let i = 0; i < MAX_P; i++) {
+    const pa = particles[i];
+    if (!pa || !ui.flowOn || !eqVisible(pa.o.eq) || speeds.get(pa.o) === 0 || (ui.focusZone && !inFocus(pa.o.eq))) { flowMesh.setMatrixAt(i, _zero); continue; }
+    const u = (pa.u0 + t * speeds.get(pa.o) / pa.len) % 1;
+    _p.copy(pa.o.curve.getPointAt(u));
+    _m.makeTranslation(_p.x, _p.y + pa.o.r + 0.06, _p.z);
+    flowMesh.setMatrixAt(i, _m);
+  }
+  flowMesh.instanceMatrix.needsUpdate = true;
+}
+
+// ---------- Incidents (Student 3) ----------
+const incObjs = {};
+DATA.incidents.forEach(inc => {
+  const g = new THREE.Group();
+  const s = new THREE.Mesh(new THREE.SphereGeometry(0.42, 18, 12), M.incident);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.6, 0.85, 32), M.ring); ring.rotation.x = -Math.PI / 2;
+  const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.6, 8), M.incident);
+  [s, ring, beacon].forEach(o => { o.userData = { kind: "incident", id: inc.reference }; pickables.push(o); });
+  g.add(s, ring, beacon); scene.add(g);
+  incObjs[inc.reference] = { g, s, ring, beacon, pos: new THREE.Vector3() };
+});
+function placeIncidents() {
+  DATA.incidents.forEach(inc => {
+    const o = pipeObjs.find(p => p.eq.reference === inc.suspected_pipe);
+    const io = incObjs[inc.reference];
+    if (!o) return;
+    io.pos.copy(o.curve.getPointAt(inc.position_on_pipe));
+    io.s.position.copy(io.pos);
+    io.ring.position.set(io.pos.x, 0.04, io.pos.z);
+    io.beacon.position.set(io.pos.x, 0.8 + PY / 2, io.pos.z);
+  });
+}
+
+// ---------- Technician avatar (scenario) ----------
+const tech = new THREE.Group();
+const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 1.1, 14), M.tech); tb.position.y = 0.55;
+const th = new THREE.Mesh(new THREE.SphereGeometry(0.24, 14, 10), M.tech); th.position.y = 1.35;
+[tb, th].forEach(o => { o.castShadow = true; tech.add(o); });
+tech.visible = false; scene.add(tech);
+
+buildPipes();
+
+// ---------- Labels overlay ----------
+const labels = [];
+function addLabel(cls, html, getPos, isShown, ref) {
+  const el = document.createElement("div");
+  el.className = "lbl " + cls; el.innerHTML = html;
+  labelsEl.appendChild(el);
+  labels.push({ el, getPos, isShown, ref });
+}
+const wp = new THREE.Vector3();
+DATA.zones.forEach(z => addLabel("zone", `${esc(z.code)} · ${esc(z.name)}`, () => zoneGroups[z.id].localToWorld(wp.set(0, z.kind === "building" ? z.floors * 1.6 + 2.2 : 2.4, -0.9)), () => true, "zone:" + z.id));
+addLabel("", "Arrivée SONEDE", () => wp.set(0, 1.8, ENTRY_Z), () => true);
+DATA.equipment.forEach(eq => {
+  const getPos = () => eq.type === "pump" ? pumpObj.get(eq.reference).localToWorld(wp.set(0, 2, 0)) : (() => { const o = pipeObjs.find(p => p.eq === eq); wp.copy(o.curve.getPointAt(eq.role === "main" ? 0.55 : 0.4)); return wp.set(wp.x, 0.55, wp.z); })();
+  addLabel("eq", esc(eq.reference), getPos, () => eqVisible(eq), "eq:" + eq.reference);
+  addLabel("wrench", WRENCH, () => { const p = getPos(); return p.set(p.x, p.y + 0.75, p.z); }, () => eqVisible(eq) && !!openWork(eq.reference), "eq:" + eq.reference);
+});
+DATA.meters.forEach(m => addLabel("meter", esc(m.serial_number), () => meterObjs[m.serial_number].localToWorld(wp.set(0, 1.25, 0)), () => true, "meter:" + m.serial_number));
+DATA.incidents.forEach(inc => addLabel("inc", "Fuite suspectée", () => wp.copy(incObjs[inc.reference].pos).setY(1.9), () => activeIncidents().includes(inc), "incident:" + inc.reference));
+addLabel("tech", "Technicien", () => tech.localToWorld(wp.set(0, 2.1, 0)), () => tech.visible);
+
+const tmp = new THREE.Vector3();
+function placeLabels() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  const selKey = ui.sel ? ui.sel.kind + ":" + ui.sel.id : null;
+  for (const L of labels) {
+    if (!L.isShown()) { L.el.hidden = true; continue; }
+    tmp.copy(L.getPos()).project(camera);
+    const vis = tmp.z < 1 && Math.abs(tmp.x) < 1.05 && Math.abs(tmp.y) < 1.05;
+    L.el.hidden = !vis;
+    if (!vis) continue;
+    L.el.style.left = ((tmp.x + 1) / 2 * w) + "px";
+    L.el.style.top = ((1 - tmp.y) / 2 * h) + "px";
+    L.el.classList.toggle("sel", !!L.ref && L.ref === selKey);
+    L.el.classList.toggle("dim", !!(ui.focusZone && L.ref && !labelInFocus(L.ref)));
+  }
+}
+function labelInFocus(ref) {
+  const [k, id] = ref.split(":");
+  if (k === "zone") return +id === ui.focusZone;
+  if (k === "eq") return inFocus(eqByRef(id));
+  if (k === "meter") return meterBySerial(id).zone === ui.focusZone;
+  if (k === "incident") return eqByRef(DATA.incidents.find(i => i.reference === id).suspected_pipe).zone === ui.focusZone;
+  return true;
+}
+function inFocus(eq) { return !ui.focusZone || eq.zone === ui.focusZone || (eq.role === "main"); }
+
+// ---------- Paint: apply state to materials ----------
+const mix = (a, b, t) => new THREE.Color(a).lerp(new THREE.Color(b), t);
+function paint() {
+  const accent = new THREE.Color(css("--accent"));
+  DATA.equipment.forEach(eq => {
+    const mat = eqMat(eq.reference);
+    mat.color.set(css("--" + toneOf(eq)));
+    const selected = ui.sel && ui.sel.kind === "eq" && ui.sel.id === eq.reference;
+    mat.emissive.copy(selected ? accent : new THREE.Color(0)); mat.emissiveIntensity = selected ? 0.5 : 0;
+    mat.opacity = inFocus(eq) ? 1 : 0.18;
+    mat.depthWrite = mat.opacity === 1;
+    (eqMeshes[eq.reference] || []).forEach(m => m.visible = eqVisible(eq));
+  });
+  DATA.zones.forEach(z => {
+    const zm = zoneMats[z.id];
+    const worst = zoneWorst(z.id);
+    zm.color.copy(worst === "ok" ? new THREE.Color(css("--zone")) : mix(css("--zone"), css("--" + worst), 0.42));
+    const selected = ui.sel && ui.sel.kind === "zone" && ui.sel.id === z.id;
+    zm.emissive.copy(selected ? accent : new THREE.Color(0)); zm.emissiveIntensity = selected ? 0.25 : 0;
+    const dim = ui.focusZone && ui.focusZone !== z.id;
+    zm.opacity = dim ? 0.3 : 1;
+    zoneGroups[z.id].traverse(o => { if (o.isMesh && o.material !== zm && !eqMeshesSet.has(o) && o.userData.kind !== "meter") { o.visible = !dim; } });
+  });
+  DATA.meters.forEach(m => {
+    const mat = meterMats[m.serial_number];
+    mat.color.set(css("--accent"));
+    const selected = ui.sel && ui.sel.kind === "meter" && ui.sel.id === m.serial_number;
+    mat.emissive.copy(selected ? new THREE.Color(css("--water")) : new THREE.Color(0)); mat.emissiveIntensity = selected ? 0.6 : 0;
+    mat.opacity = (!ui.focusZone || m.zone === ui.focusZone) ? 1 : 0.2;
+  });
+  DATA.incidents.forEach(inc => { incObjs[inc.reference].g.visible = activeIncidents().includes(inc); });
+  M.ground.opacity = ui.xray ? 0.55 : 1; M.ground.depthWrite = !ui.xray;
+  renderLegend(); renderList();
+}
+let eqMeshesSet = new Set();
+function refreshEqSet() { eqMeshesSet = new Set(Object.values(eqMeshes).flat()); }
+refreshEqSet();
+
+// ---------- Side panels ----------
+function renderLegend() {
+  const L = document.getElementById("legend");
+  document.getElementById("legend-title").textContent = ui.colorMode === "status" ? "Statut" : "Risque de panne à 30 jours";
+  const tones = ui.colorMode === "status"
+    ? Object.values(STATUS).map(s => `<li><span class="dot ${s.tone}"></span>${s.label}</li>`).join("")
+    : `<li><span class="dot ok"></span>Faible · moins de 30 %</li><li><span class="dot warn"></span>Moyen · 30 à 60 %</li><li><span class="dot crit"></span>Élevé · plus de 60 %</li>`;
+  L.innerHTML = tones + `<li><span class="sq"></span>Compteur d'eau</li><li><span class="dot water"></span>Flux, vitesse selon la consommation du mois</li><li><span class="dot crit"></span>Point rouge pulsant · fuite suspectée</li><li><span style="color:var(--warn);display:inline-flex;width:12px">${WRENCH}</span>Intervention en cours</li>`;
+}
+function renderList() {
+  const selRef = ui.sel && ui.sel.kind === "eq" ? ui.sel.id : null;
+  document.getElementById("eq-list").innerHTML = DATA.equipment.map(eq => {
+    const s = eqState(eq);
+    return `<li${eqVisible(eq) ? "" : " hidden"}><button type="button" data-kind="eq" data-id="${esc(eq.reference)}" aria-current="${eq.reference === selRef}">
+      <span class="dot ${toneOf(eq)}"></span>
+      <span><span class="ref">${esc(eq.reference)}</span> <span class="sub">${eq.type === "pipe" ? "Canalisation" : "Pompe"} · ${esc(zoneById(eq.zone).name)}${openWork(eq.reference) ? " · en intervention" : ""}</span></span>
+      <span class="val">${ui.colorMode === "risk" ? pct(s.risk) : STATUS[s.status].label}</span></button></li>`;
+  }).join("");
+}
+document.getElementById("eq-list").addEventListener("click", e => { const b = e.target.closest("button[data-id]"); if (b) select({ kind: "eq", id: b.dataset.id }, true); });
+
+const detail = document.getElementById("detail");
+function head(kind, title) { return `<div class="panel-head"><span class="kind">${kind}</span><button type="button" class="close-btn" data-act="close">Fermer</button></div><h2>${esc(title)}</h2>`; }
+function sparkline(series) {
+  if (!series.length) return '<p class="note">Aucun relevé à cette date.</p>';
+  const W = 300, H = 92, pad = 16, max = Math.max(...series.map(s => s.m3)) * 1.1;
+  const bw = (W - pad) / series.length;
+  const bars = series.map((s, i) => {
+    const h = (s.m3 / max) * (H - 26);
+    const spike = isSpike(series, i);
+    return `<rect x="${pad + i * bw + 2}" y="${H - 14 - h}" width="${bw - 4}" height="${h}" rx="2" style="fill:var(${spike ? "--crit" : "--accent"})"><title>${fmtMonth(s.d)} : ${s.m3} m³</title></rect>
+      <text x="${pad + i * bw + bw / 2}" y="${H - 3}" text-anchor="middle">${fmtMonth(s.d).slice(0, 3)}</text>`;
+  }).join("");
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Consommation mensuelle en m³"><line x1="${pad}" y1="${H - 14}" x2="${W}" y2="${H - 14}" style="stroke:var(--line)"/><text x="0" y="10">m³</text>${bars}</svg>`;
+}
+function renderDetail() {
+  detail.classList.toggle("open", !!ui.sel);
+  if (!ui.sel) {
+    detail.innerHTML = `<h2>Inspecteur</h2><p class="card-empty">Cliquez sur une zone, une canalisation, une pompe, un compteur ou le point rouge d'une fuite.</p>`;
+    return;
+  }
+  const { kind, id } = ui.sel;
+  if (kind === "eq") return detailEq(eqByRef(id));
+  if (kind === "zone") return detailZone(zoneById(id));
+  if (kind === "meter") return detailMeter(meterBySerial(id));
+  if (kind === "incident") return detailIncident(DATA.incidents.find(i => i.reference === id));
+}
+function detailEq(eq) {
+  const z = zoneById(eq.zone), s = eqState(eq), st = STATUS[s.status], rt = riskTone(s.risk);
+  const spec = eq.type === "pipe"
+    ? [["Matière", eq.material], ["Longueur", eq.length_m + " m"], ["Diamètre", eq.diameter_mm + " mm"]]
+    : [["Puissance", eq.power_kw + " kW"], ["Débit nominal", eq.rated_flow_m3_h + " m³/h"], ["Rendement", eq.efficiency_pct + " %"]];
+  const rows = [["Classe", eq.type === "pipe" ? "WaterPipe" : "WaterPump"], ["Zone", `${z.code} · ${z.name}`], ["Installation", fmtDate(eq.installation_date)], ...spec];
+  const works = worksFor(eq.reference).sort((a, b) => b.scheduled_at.localeCompare(a.scheduled_at));
+  const d = date();
+  detail.innerHTML = head(eq.type === "pipe" ? "Canalisation" : "Pompe", eq.reference) + `
+    <span class="status ${st.tone}"><span class="dot ${st.tone}"></span>${st.label}</span>
+    <dl class="kv">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+    <dl class="kv"><dt>Risque de panne (30 j)</dt><dd>${pct(s.risk)}</dd></dl>
+    <div class="risk-bar"><span style="width:${s.risk * 100}%;background:var(--${rt})"></span></div>
+    <p class="note">Score de démonstration. En production : predict_failure_30d(), enregistré avec model_version et predicted_at.</p>
+    <h3>Interventions (${works.length})</h3>
+    ${works.length ? `<ul class="works">${works.map(w => {
+      const open = !w.completed_at || w.completed_at > d;
+      return `<li><span class="ref">${w.reference}</span>${open ? `<button type="button" data-act="close-work" data-id="${w.reference}" ${scn ? "disabled" : ""}>Clôturer</button>` : `<span class="note">Terminée</span>`}
+        <span class="sub">${MW_TYPE[w.maintenance_type]} · ${fmtDate(w.scheduled_at)} · ${esc(techName(w.technician))}${w.cost_tnd ? " · " + w.cost_tnd + " TND" : ""}</span>
+        ${w.work_summary ? `<span class="sub">${esc(w.work_summary)}</span>` : ""}</li>`;
+    }).join("")}</ul>` : '<p class="note">Aucune intervention à cette date.</p>'}
+    <button type="button" class="primary" data-act="plan" ${scn ? "disabled" : ""}>Planifier une maintenance</button>
+    <div id="mw-slot"></div>`;
+}
+function maintenanceForm(eq) {
+  return `<form class="mw" id="mw-form">
+    <span class="xor">${eq.type === "pipe" ? `pipe = ${eq.reference} · pump = null` : `pipe = null · pump = ${eq.reference}`} (exactement une cible)</span>
+    <label for="mw-type">Type<select id="mw-type"><option value="corrective">Corrective</option><option value="preventive">Préventive</option></select></label>
+    <label for="mw-date">Date prévue<input type="date" id="mw-date" value="${date()}" required></label>
+    <label for="mw-tech">Technicien<select id="mw-tech">${DATA.technicians.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("")}</select></label>
+    <label for="mw-sum">Résumé<textarea id="mw-sum" rows="2" placeholder="Ex. : contrôle du raccord, remplacement du joint"></textarea></label>
+    <div class="row"><button type="button" data-act="cancel-form">Annuler</button><button type="submit" class="primary">Créer l'intervention</button></div>
+  </form>`;
+}
+function detailZone(z) {
+  const eqs = DATA.equipment.filter(e => e.zone === z.id);
+  const m = DATA.meters.find(x => x.zone === z.id);
+  const worst = zoneWorst(z.id);
+  const label = { ok: "Aucun problème", warn: "À surveiller", crit: "Problème actif" }[worst];
+  detail.innerHTML = head("Zone", `${z.code} · ${z.name}`) + `
+    <span class="status ${worst}"><span class="dot ${worst}"></span>${label}</span>
+    <dl class="kv"><dt>Classe</dt><dd>WaterZone</dd><dt>Usage</dt><dd>${esc(z.usage)}</dd><dt>Pression de service</dt><dd>${z.service_pressure_bar} bar</dd>
+    <dt>Équipements</dt><dd>${eqs.length}</dd><dt>Compteur</dt><dd>${m ? m.serial_number : "Aucun"}</dd><dt>Conso. dernier mois</dt><dd>${lastCons(z.id)} m³</dd>
+    <dt>Position</dt><dd>pos_x ${z.pos_x} · pos_y ${z.pos_y}</dd></dl>
+    <p class="note">validate_meter_coverage() : ${m ? "la zone a au moins un compteur." : "aucun compteur, la zone est invalide."}</p>
+    ${ui.focusZone === z.id ? '<button type="button" data-act="unfocus">Voir tout le site</button>' : '<button type="button" class="primary" data-act="focus">Isoler cette zone</button>'}`;
+}
+function detailMeter(m) {
+  const z = zoneById(m.zone), series = monthly(m), r = readingsOf(m), last = r[r.length - 1];
+  const spikeIdx = series.findIndex((_, i) => isSpike(series, i));
+  let extra = "";
+  if (scn && scn.step === 4) {
+    const sep = series.find(s => s.d === "2026-09-30").m3, oct = series[series.length - 1].m3;
+    extra = `<p class="msg">Mesuré : ${sep} m³ en septembre, ${oct} m³ du 1er au 25 octobre. Écart mesuré : ${sep - oct} m³.</p>
+      <p class="note">Ce chiffre est mesuré par le compteur. Une économie annuelle serait une estimation, à présenter séparément dans le rapport d'audit (Student 4).</p>`;
+  }
+  detail.innerHTML = head("Compteur · Student 2", m.serial_number) + `
+    <dl class="kv"><dt>Classe</dt><dd>WaterMeter</dd><dt>Zone</dt><dd>${z.code} · ${esc(z.name)}</dd><dt>Catégorie</dt><dd>${esc(m.customer_category)}</dd>
+    <dt>Dernier index</dt><dd>${last ? last[1].toLocaleString("fr-FR") + " m³" : "—"}</dd><dt>Relevé du</dt><dd>${last ? fmtDate(last[0]) : "—"}</dd>
+    <dt>Prévision ${m.horizon_days} j</dt><dd>${m.forecast_m3} m³</dd></dl>
+    <h3>Consommation mensuelle</h3>${sparkline(series)}
+    ${spikeIdx >= 0 ? `<p class="note">Barre rouge : consommation supérieure à 140 % de la moyenne des 3 mois précédents (detect_anomaly).</p>` : ""}
+    ${z.kind === "building" && spikeIdx >= 0 && series[spikeIdx].d.slice(5, 7) === "09" ? `<p class="note">Probable faux positif : reprise des cours après les vacances d'été. C'est pour cela qu'une anomalie doit être revue par une personne.</p>` : ""}${extra}`;
+}
+function detailIncident(inc) {
+  const status = incidentStatus(inc);
+  detail.innerHTML = head("Incident · Student 3", inc.reference) + `
+    <span class="status ${status === "resolved" ? "ok" : "crit"}"><span class="dot ${status === "resolved" ? "ok" : "crit"}"></span>${INC_STATUS[status]}</span>
+    <dl class="kv"><dt>Classe</dt><dd>LeakIncident</dd><dt>Compteur</dt><dd>${inc.meter}</dd><dt>Relevé déclencheur</dt><dd>${fmtDate(inc.trigger_reading)}</dd>
+    <dt>Canalisation suspectée</dt><dd>${inc.suspected_pipe}</dd><dt>Technicien</dt><dd>${esc(techName(inc.technician))}</dd><dt>Ouvert le</dt><dd>${fmtDate(inc.opened_at)}</dd></dl>
+    <p class="note">Règle : ${esc(inc.rule)}</p>
+    <p>${esc(inc.description)}</p>
+    <p class="note">Un incident est un signal à vérifier. Il ne prouve pas la fuite.</p>
+    <button type="button" class="primary" data-act="goto-pipe" data-id="${inc.suspected_pipe}">Voir la canalisation ${inc.suspected_pipe}</button>`;
+}
+detail.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const act = b.dataset.act;
+  if (act === "close") select(null);
+  if (act === "focus") setFocus(ui.sel.id);
+  if (act === "unfocus") setFocus(null);
+  if (act === "goto-pipe") select({ kind: "eq", id: b.dataset.id }, true);
+  if (act === "plan") { document.getElementById("mw-slot").innerHTML = maintenanceForm(eqByRef(ui.sel.id)); document.getElementById("mw-type").focus(); }
+  if (act === "cancel-form") document.getElementById("mw-slot").innerHTML = "";
+  if (act === "close-work") { // close_work()
+    const w = DATA.works.find(x => x.reference === b.dataset.id);
+    if (w) { w.completed_at = date() < w.scheduled_at ? w.scheduled_at : date(); refreshJSON(); paint(); renderDetail(); }
+  }
+});
+detail.addEventListener("submit", e => {
+  if (e.target.id !== "mw-form") return;
+  e.preventDefault();
+  const eq = eqByRef(ui.sel.id);
+  const w = { reference: "MW-2026-0" + (workSeq++), pipe: eq.type === "pipe" ? eq.reference : null, pump: eq.type === "pump" ? eq.reference : null,
+    technician: +document.getElementById("mw-tech").value, maintenance_type: document.getElementById("mw-type").value,
+    scheduled_at: document.getElementById("mw-date").value || date(), completed_at: null, cost_tnd: null, work_summary: document.getElementById("mw-sum").value.trim() };
+  DATA.works.push(w);
+  refreshJSON(); paint(); renderDetail();
+  const slot = document.getElementById("mw-slot");
+  slot.innerHTML = `<p class="msg">Intervention ${w.reference} créée pour le ${fmtDate(w.scheduled_at)}. Démo : rien n'est enregistré en base.</p>`;
+});
+
+// ---------- Selection, focus, camera ----------
+let tween = null;
+function flyTo(target, dist) {
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  const endPos = target.clone().addScaledVector(dir, dist || camera.position.distanceTo(controls.target));
+  if (reduceMotion) { controls.target.copy(target); camera.position.copy(endPos); return; }
+  tween = { t0: performance.now(), dur: 800, fromT: controls.target.clone(), toT: target.clone(), fromP: camera.position.clone(), toP: endPos };
+}
+function objPos(sel) {
+  const p = new THREE.Vector3();
+  if (sel.kind === "zone") return zoneGroups[sel.id].getWorldPosition(p);
+  if (sel.kind === "meter") return meterObjs[sel.id].getWorldPosition(p);
+  if (sel.kind === "incident") return p.copy(incObjs[sel.id].pos).setY(0);
+  const eq = eqByRef(sel.id);
+  if (eq.type === "pump") return pumpObj.get(eq.reference).getWorldPosition(p);
+  p.copy(pipeObjs.find(o => o.eq === eq).curve.getPointAt(0.5)); return p.setY(0);
+}
+function select(sel, fly) {
+  ui.sel = sel;
+  paint(); renderDetail();
+  if (sel && fly) flyTo(objPos(sel), sel.kind === "zone" ? 22 : 18);
+}
+function setFocus(zid) {
+  ui.focusZone = zid;
+  if (zid) flyTo(zoneGroups[zid].getWorldPosition(new THREE.Vector3()), 20);
+  else flyTo(HOME.target.clone(), HOME.pos.distanceTo(HOME.target));
+  paint(); renderDetail();
+}
+
+// ---------- Picking + edit mode drag ----------
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+function shown(o) { for (let x = o; x; x = x.parent) if (!x.visible) return false; return true; }
+function setNdc(e) { const r = renderer.domElement.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera); }
+function hitAt(e, list) { setNdc(e); return ray.intersectObjects(list || pickables, false).find(h => shown(h.object) && !(h.object.material && h.object.material.opacity < 0.5)); }
+let down = null, drag = null;
+const dom = renderer.domElement;
+dom.addEventListener("pointerdown", e => {
+  down = [e.clientX, e.clientY];
+  if (ui.edit) {
+    const h = hitAt(e, zonePads);
+    if (h) {
+      const z = zoneById(h.object.userData.id);
+      const p = new THREE.Vector3(); ray.ray.intersectPlane(plane, p);
+      drag = { z, off: new THREE.Vector2(p.x - z.pos_x, p.z - z.pos_y) };
+      controls.enabled = false; dom.setPointerCapture(e.pointerId);
+    }
+  }
+});
+let rebuildQueued = false;
+dom.addEventListener("pointermove", e => {
+  if (drag) {
+    setNdc(e);
+    const p = new THREE.Vector3();
+    if (ray.ray.intersectPlane(plane, p)) {
+      const snap = v => Math.round(v * 2) / 2;
+      drag.z.pos_x = Math.max(-GW / 2 + ZW / 2, Math.min(GW / 2 - ZW / 2, snap(p.x - drag.off.x)));
+      drag.z.pos_y = Math.max(-GD / 2 + ZD / 2, Math.min(ENTRY_Z - 3.5 - ZD / 2, snap(p.z - drag.off.y)));
+      zoneGroups[drag.z.id].position.set(drag.z.pos_x, 0, drag.z.pos_y);
+      if (!rebuildQueued) { rebuildQueued = true; requestAnimationFrame(() => { rebuildQueued = false; buildPipes(); refreshEqSet(); paint(); }); }
+    }
+    return;
+  }
+  dom.style.cursor = ui.edit ? (hitAt(e, zonePads) ? "move" : "grab") : (hitAt(e) ? "pointer" : "grab");
+});
+dom.addEventListener("pointerup", e => {
+  if (drag) { drag = null; controls.enabled = true; refreshJSON(); if (ui.sel && ui.sel.kind === "zone") renderDetail(); return; }
+  if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
+  const h = hitAt(e);
+  if (!h) { select(null); return; }
+  const { kind, id } = h.object.userData;
+  select({ kind, id }, false);
+});
+
+// ---------- Controls ----------
+const $ = id => document.getElementById(id);
+function pressed(el, v) { el.setAttribute("aria-pressed", v); }
+$("mode-status").onclick = () => { ui.colorMode = "status"; pressed($("mode-status"), true); pressed($("mode-risk"), false); paint(); renderDetail(); };
+$("mode-risk").onclick = () => { ui.colorMode = "risk"; pressed($("mode-status"), false); pressed($("mode-risk"), true); paint(); renderDetail(); };
+document.querySelectorAll("[data-type]").forEach(b => b.onclick = () => {
+  ui.type = b.dataset.type; document.querySelectorAll("[data-type]").forEach(x => pressed(x, x === b));
+  if (ui.sel && ui.sel.kind === "eq" && !eqVisible(eqByRef(ui.sel.id))) select(null); else paint();
+});
+$("f-risk").onchange = e => { ui.highRisk = e.target.checked; if (ui.sel && ui.sel.kind === "eq" && !eqVisible(eqByRef(ui.sel.id))) select(null); else paint(); };
+$("btn-xray").onclick = () => { ui.xray = !ui.xray; pressed($("btn-xray"), ui.xray); paint(); };
+$("btn-flow").onclick = () => { ui.flowOn = !ui.flowOn; pressed($("btn-flow"), ui.flowOn); };
+pressed($("btn-flow"), ui.flowOn);
+$("btn-edit").onclick = () => {
+  ui.edit = !ui.edit; pressed($("btn-edit"), ui.edit); stage.classList.toggle("editing", ui.edit);
+  $("hint").innerHTML = ui.edit ? "<span>Mode édition : glissez une zone pour la déplacer. Les canalisations se recalculent.</span>" : "<span>Glisser pour tourner · molette pour zoomer · cliquer une zone, un équipement ou un compteur</span>";
+};
+$("btn-reset").onclick = () => { ui.focusZone = null; flyTo(HOME.target.clone(), HOME.pos.distanceTo(HOME.target)); camera.position.copy(HOME.pos); controls.target.copy(HOME.target); tween = null; paint(); renderDetail(); };
+const tl = $("tl"), tlOut = $("tl-out");
+function syncTimeline() {
+  tlOut.textContent = ui.t === TIMELINE.length - 1 ? "Aujourd'hui" : fmtDate(TIMELINE[ui.t]);
+  tl.disabled = !!scn;
+}
+tl.oninput = () => { ui.t = +tl.value; syncTimeline(); paint(); renderDetail(); };
+
+// ---------- Scenario: leak at the school ----------
+const STEPS = [
+  { t: "Enregistrer", p: "Le compteur CPT-03 du jardin est importé. Septembre affiche 410 m³, bien au-dessus des mois précédents. La barre rouge vient de detect_anomaly()." },
+  { t: "Enquêter", p: "La règle d'alerte se déclenche et ouvre l'incident LI-2026-014. La canalisation CND-004 est suspectée et passe « À surveiller »." },
+  { t: "Réparer", p: "Sana Jlassi se rend sur place. L'intervention MW-2026-031 vise CND-004 (une seule cible). À la clôture, l'incident est résolu et la canalisation revient en service." },
+  { t: "Mesurer", p: "Le relevé d'octobre retombe à 178 m³. L'écart mesuré alimente l'objectif d'économie et le rapport d'audit de Student 4." }
+];
+function renderScenario() {
+  const el = $("scenario");
+  if (!scn) { el.hidden = true; return; }
+  el.hidden = false;
+  const s = STEPS[scn.step - 1];
+  el.innerHTML = `<div class="steps">${STEPS.map((_, i) => `<i class="${i < scn.step ? "on" : ""}"></i>`).join("")}</div>
+    <h3>Étape ${scn.step} sur 4 · ${s.t}</h3><p>${s.p}</p>
+    <div class="row"><button type="button" data-s="quit">Quitter</button><button type="button" data-s="prev" ${scn.step === 1 ? "disabled" : ""}>Précédent</button>
+    <button type="button" class="primary" data-s="next">${scn.step === 4 ? "Terminer" : "Suivant"}</button></div>`;
+}
+$("scenario").addEventListener("click", e => {
+  const b = e.target.closest("[data-s]"); if (!b) return;
+  if (b.dataset.s === "quit" || (b.dataset.s === "next" && scn.step === 4)) return stopScenario();
+  goStep(scn.step + (b.dataset.s === "next" ? 1 : -1));
+});
+function goStep(n) {
+  scn.step = n; scn.arrived = n === 4; tech.visible = n === 3; scn.techT0 = performance.now();
+  ui.focusZone = null; ui.type = "all"; ui.highRisk = false; $("f-risk").checked = false;
+  document.querySelectorAll("[data-type]").forEach(x => pressed(x, x.dataset.type === "all"));
+  if (n === 1 || n === 4) select({ kind: "meter", id: "CPT-03" }, true);
+  if (n === 2) select({ kind: "incident", id: "LI-2026-014" }, true);
+  if (n === 3) select({ kind: "eq", id: "CND-004" }, true);
+  renderScenario(); syncTimeline();
+}
+function startScenario() { scn = { step: 1 }; ui.t = TIMELINE.length - 1; tl.value = ui.t; goStep(1); }
+function stopScenario() { scn = null; tech.visible = false; renderScenario(); syncTimeline(); select(null); setFocus(null); }
+$("btn-scn").onclick = () => scn ? stopScenario() : startScenario();
+function updateTech(now) {
+  if (!scn || scn.step !== 3) return;
+  const target = incObjs["LI-2026-014"].pos;
+  const a = new THREE.Vector3(1.4, 0, ENTRY_Z), b = new THREE.Vector3(target.x + 1, 0, ENTRY_Z - 2), c = new THREE.Vector3(target.x + 1, 0, target.z);
+  const k = Math.min(1, (now - scn.techT0) / (reduceMotion ? 1 : 3500));
+  const p = k < 0.5 ? a.clone().lerp(b, k * 2) : b.clone().lerp(c, (k - 0.5) * 2);
+  tech.position.copy(p);
+  if (k >= 1 && !scn.arrived) { scn.arrived = true; paint(); renderDetail(); }
+}
+
+// ---------- Resize, theme, loop ----------
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.fov = w < 560 ? 54 : 40; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+applyTheme(); resize(); renderDetail(); refreshJSON(); syncTimeline();
+
+const clock = new THREE.Clock();
+(function loop(now) {
+  const t = clock.getElapsedTime();
+  if (tween) {
+    const k = Math.min(1, (performance.now() - tween.t0) / tween.dur), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    controls.target.lerpVectors(tween.fromT, tween.toT, e); camera.position.lerpVectors(tween.fromP, tween.toP, e);
+    if (k >= 1) tween = null;
+  }
+  const pulse = reduceMotion ? 1 : 1 + 0.35 * Math.sin(t * 4);
+  Object.values(incObjs).forEach(o => { o.ring.scale.setScalar(pulse); M.ring.opacity = reduceMotion ? 0.8 : 0.45 + 0.4 * (Math.sin(t * 4) + 1) / 2; });
+  updateTech(performance.now());
+  updateFlow(t);
+  controls.update();
+  renderer.render(scene, camera);
+  placeLabels();
+  requestAnimationFrame(loop);
+})();
+}
+</script>
