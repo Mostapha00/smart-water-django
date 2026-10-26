@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Sites · AquaMind{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="h3 m-0">Sites surveillés</h1>
+  {% if perms.infrastructure.add_site %}<a class="btn btn-primary" href="{% url 'infrastructure:site_create' %}">Nouveau site</a>{% endif %}
+</div>
+{% if object_list %}
+<div class="table-responsive"><table class="table align-middle">
+  <thead><tr><th>Code</th><th>Nom</th><th>Type</th><th>Gouvernorat</th><th class="text-end">Zones</th><th class="text-end">Canalisations</th><th class="text-end">Pompes</th><th></th></tr></thead>
+  <tbody>
+  {% for site in object_list %}
+    <tr>
+      <td class="mono">{{ site.code }}</td>
+      <td><a href="{{ site.get_absolute_url }}">{{ site.name }}</a></td>
+      <td>{{ site.get_site_type_display }}</td>
+      <td>{{ site.governorate }}</td>
+      <td class="text-end">{{ site.zone_count }}</td>
+      <td class="text-end">{{ site.pipe_count }}</td>
+      <td class="text-end">{{ site.pump_count }}</td>
+      <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'infrastructure:site_maquette' site.pk %}">Maquette 3D</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<div class="border rounded p-4 text-body-secondary">Aucun site pour l'instant. Créez-en un, ou chargez la démo avec <code>python manage.py seed_demo</code>.</div>
+{% endif %}
+{% endblock %}

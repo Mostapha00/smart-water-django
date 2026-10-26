@@ -1,0 +1,3 @@
+# Dépendances du projet AquaMind (même versions sur les 4 PC)
+Django>=5.2,<5.3
+psycopg[binary]>=3.2,<3.3        # PostgreSQL 16

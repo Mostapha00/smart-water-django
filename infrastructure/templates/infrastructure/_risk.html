@@ -1,0 +1,3 @@
+{% if eq.failure_risk_30d is not None %}{% widthratio eq.failure_risk_30d 1 100 as pct %}
+<div class="d-flex align-items-center gap-2"><div class="risk-bar flex-grow-1"><span style="width:{{ pct }}%;background:{% if eq.failure_risk_30d >= 0.6 %}#c4402f{% elif eq.failure_risk_30d >= 0.3 %}#c98a12{% else %}#1f8a5b{% endif %}"></span></div><span class="mono">{{ pct }} %</span></div>
+{% else %}<span class="text-body-secondary small">non calculé</span>{% endif %}

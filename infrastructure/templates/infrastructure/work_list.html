@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Interventions · AquaMind{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="h3 m-0">Interventions de maintenance</h1>
+  {% if perms.infrastructure.add_maintenancework %}<a class="btn btn-primary" href="{% url 'infrastructure:work_create' %}">Planifier une maintenance</a>{% endif %}
+</div>
+<div class="btn-group mb-3" role="group" aria-label="Filtrer">
+  <a class="btn btn-sm {% if not state %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="?">Toutes</a>
+  <a class="btn btn-sm {% if state == 'ouvertes' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="?etat=ouvertes">En cours</a>
+  <a class="btn btn-sm {% if state == 'terminees' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="?etat=terminees">Terminées</a>
+</div>
+<div class="table-responsive"><table class="table align-middle">
+  <thead><tr><th>Réf.</th><th>Cible</th><th>Site</th><th>Type</th><th>Prévue</th><th>État</th><th>Technicien</th></tr></thead>
+  <tbody>
+  {% for w in object_list %}
+  <tr><td><a class="mono" href="{{ w.get_absolute_url }}">{{ w.reference }}</a></td><td class="mono">{{ w.target }}</td><td>{{ w.target.zone.site.name }}</td><td>{{ w.get_maintenance_type_display }}</td><td>{{ w.scheduled_at|date:"d/m/Y H:i" }}</td>
+    <td>{% if w.is_open %}<span class="badge text-bg-warning">En cours</span>{% else %}<span class="badge text-bg-success">Terminée</span>{% endif %}</td><td>{{ w.technician }}</td></tr>
+  {% empty %}<tr><td colspan="7" class="text-body-secondary">Aucune intervention.</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+{% if is_paginated %}<nav><ul class="pagination">{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?etat={{ state }}&page={{ page_obj.previous_page_number }}">Précédent</a></li>{% endif %}<li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ paginator.num_pages }}</span></li>{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?etat={{ state }}&page={{ page_obj.next_page_number }}">Suivant</a></li>{% endif %}</ul></nav>{% endif %}
+{% endblock %}

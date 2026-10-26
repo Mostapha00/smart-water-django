@@ -1,0 +1,8 @@
+:root { --aq-accent: #0a6e8a; }
+.navbar-brand { color: var(--aq-accent); }
+.btn-primary { --bs-btn-bg: var(--aq-accent); --bs-btn-border-color: var(--aq-accent); --bs-btn-hover-bg: #085a72; --bs-btn-hover-border-color: #085a72; }
+.mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: .9em; }
+.status-en_service { color: #1f8a5b; } .status-a_surveiller { color: #b07a10; } .status-en_panne { color: #c4402f; } .status-hors_service { color: #6c757d; }
+.risk-bar { height: 6px; background: var(--bs-secondary-bg); border-radius: 3px; overflow: hidden; min-width: 60px; }
+.risk-bar span { display: block; height: 100%; }
+.kpi .value { font-size: 1.6rem; font-weight: 600; font-variant-numeric: tabular-nums; }

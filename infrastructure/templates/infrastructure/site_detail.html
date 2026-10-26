@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{{ site.name }} · AquaMind{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+  <div>
+    <div class="mono text-body-secondary">{{ site.code }}</div>
+    <h1 class="h3 m-0">{{ site.name }}</h1>
+    <div class="text-body-secondary">{{ site.get_site_type_display }} · {{ site.governorate }}{% if site.address %} · {{ site.address }}{% endif %}</div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-primary" href="{% url 'infrastructure:site_maquette' site.pk %}">Maquette 3D</a>
+    {% if perms.infrastructure.change_site %}<a class="btn btn-outline-secondary" href="{% url 'infrastructure:site_update' site.pk %}">Modifier</a>{% endif %}
+    {% if perms.infrastructure.delete_site %}<a class="btn btn-outline-danger" href="{% url 'infrastructure:site_delete' site.pk %}">Supprimer</a>{% endif %}
+  </div>
+</div>
+
+{% if structure_error %}<div class="alert alert-warning">{{ structure_error }}</div>{% endif %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="border rounded p-3 kpi"><div class="small text-body-secondary">Zones</div><div class="value">{{ zones|length }}</div></div></div>
+  <div class="col-6 col-md-3"><div class="border rounded p-3 kpi"><div class="small text-body-secondary">Équipements</div><div class="value">{{ equipment_count }}</div></div></div>
+  <div class="col-6 col-md-3"><div class="border rounded p-3 kpi"><div class="small text-body-secondary">À surveiller ou en panne</div><div class="value">{{ problems|length }}</div></div></div>
+  <div class="col-6 col-md-3"><div class="border rounded p-3 kpi"><div class="small text-body-secondary">Interventions ouvertes</div><div class="value">{{ open_works|length }}</div></div></div>
+</div>
+
+{% if high_risk %}
+<div class="alert alert-danger"><strong>Risque de panne élevé (≥ 60 %) :</strong>
+  {% for eq in high_risk %}<a class="alert-link mono" href="{{ eq.get_absolute_url }}">{{ eq.reference }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}
+</div>
+{% endif %}
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 m-0">Zones et équipements</h2>
+  {% if perms.infrastructure.add_waterzone %}<a class="btn btn-sm btn-outline-primary" href="{% url 'infrastructure:zone_create' %}?site={{ site.pk }}">Ajouter une zone</a>{% endif %}
+</div>
+{% for zone in zones %}
+<section class="border rounded mb-3" id="zone-{{ zone.pk }}">
+  <div class="d-flex justify-content-between align-items-center p-3 border-bottom flex-wrap gap-2">
+    <div><span class="mono">{{ zone.code }}</span> <strong>{{ zone.name }}</strong>
+      <span class="text-body-secondary small">· {{ zone.usage|default:"usage non précisé" }}{% if zone.service_pressure_bar %} · {{ zone.service_pressure_bar }} bar{% endif %}</span></div>
+    <div class="d-flex gap-2">
+      {% if perms.infrastructure.add_waterpipe %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'infrastructure:pipe_create' %}?zone={{ zone.pk }}">+ Canalisation</a>{% endif %}
+      {% if perms.infrastructure.add_waterpump %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'infrastructure:pump_create' %}?zone={{ zone.pk }}">+ Pompe</a>{% endif %}
+      {% if perms.infrastructure.change_waterzone %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'infrastructure:zone_update' zone.pk %}">Modifier</a>{% endif %}
+      {% if perms.infrastructure.delete_waterzone %}<a class="btn btn-sm btn-outline-danger" href="{% url 'infrastructure:zone_delete' zone.pk %}">Supprimer</a>{% endif %}
+    </div>
+  </div>
+  {% with pipes=zone.waterpipes.all pumps=zone.waterpumps.all %}
+  {% if pipes or pumps %}
+  <div class="table-responsive"><table class="table table-sm m-0 align-middle">
+    <thead><tr><th>Référence</th><th>Type</th><th>Caractéristiques</th><th>Statut</th><th style="width:180px">Risque 30 j</th></tr></thead>
+    <tbody>
+    {% for eq in pipes %}<tr><td><a class="mono" href="{{ eq.get_absolute_url }}">{{ eq.reference }}</a></td><td>Canalisation{% if eq.is_main_supply %} (arrivée){% endif %}</td><td>{{ eq.material }} · {{ eq.length_m }} m · Ø {{ eq.diameter_mm }} mm</td><td>{% include "infrastructure/_status.html" %}</td><td>{% include "infrastructure/_risk.html" %}</td></tr>{% endfor %}
+    {% for eq in pumps %}<tr><td><a class="mono" href="{{ eq.get_absolute_url }}">{{ eq.reference }}</a></td><td>Pompe</td><td>{{ eq.power_kw }} kW · {{ eq.rated_flow_m3_h }} m³/h{% if eq.efficiency_pct %} · {{ eq.efficiency_pct }} %{% endif %}</td><td>{% include "infrastructure/_status.html" %}</td><td>{% include "infrastructure/_risk.html" %}</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="p-3 m-0 text-body-secondary small">Aucun équipement dans cette zone.</p>{% endif %}
+  {% endwith %}
+</section>
+{% empty %}
+<p class="text-body-secondary">Ce site n'a pas encore de zone.</p>
+{% endfor %}
+
+<h2 class="h5 mt-4">Interventions ouvertes</h2>
+{% if open_works %}
+<ul class="list-group">{% for w in open_works %}
+  <li class="list-group-item d-flex justify-content-between flex-wrap gap-2"><span><a class="mono" href="{{ w.get_absolute_url }}">{{ w.reference }}</a> · {{ w.get_maintenance_type_display }} sur <span class="mono">{{ w.target }}</span></span><span class="text-body-secondary small">{{ w.scheduled_at|date:"d/m/Y H:i" }} · {{ w.technician }}</span></li>
+{% endfor %}</ul>
+{% else %}<p class="text-body-secondary">Aucune intervention en cours.</p>{% endif %}
+{% endblock %}

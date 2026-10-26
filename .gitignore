@@ -1,5 +1,22 @@
-.venv/
+# Python
 __pycache__/
 *.py[cod]
-*.sqlite3
+.venv/
+venv/
+env/
 
+# Django
+db.sqlite3
+media/
+staticfiles/
+.env
+
+# IA : modèles entraînés (trop lourds pour Git, à partager autrement)
+*.joblib
+*.pkl
+
+# Éditeurs / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

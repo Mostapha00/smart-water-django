@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ work.reference }} · AquaMind{% endblock %}
+{% block content %}
+<nav class="small mb-2"><a href="{% url 'infrastructure:work_list' %}">Interventions</a> › {{ work.reference }}</nav>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+  <div><h1 class="h3 m-0 mono">{{ work.reference }}</h1>
+    <div>{{ work.get_maintenance_type_display }} sur <a class="mono" href="{{ work.target.get_absolute_url }}">{{ work.target }}</a> · {% if work.is_open %}<span class="badge text-bg-warning">En cours</span>{% else %}<span class="badge text-bg-success">Terminée</span>{% endif %}</div></div>
+  {% if perms.infrastructure.change_maintenancework %}<a class="btn btn-outline-secondary" href="{% url 'infrastructure:work_update' work.pk %}">Modifier</a>{% endif %}
+</div>
+<dl class="row">
+  <dt class="col-sm-3">Site</dt><dd class="col-sm-9">{{ work.target.zone.site }}</dd>
+  <dt class="col-sm-3">Technicien</dt><dd class="col-sm-9">{{ work.technician }}</dd>
+  <dt class="col-sm-3">Prévue le</dt><dd class="col-sm-9">{{ work.scheduled_at|date:"d/m/Y H:i" }}</dd>
+  <dt class="col-sm-3">Terminée le</dt><dd class="col-sm-9">{{ work.completed_at|date:"d/m/Y H:i"|default:"—" }}</dd>
+  <dt class="col-sm-3">Coût</dt><dd class="col-sm-9">{% if work.cost_tnd %}{{ work.cost_tnd }} TND{% else %}—{% endif %}</dd>
+  <dt class="col-sm-3">Résumé</dt><dd class="col-sm-9">{{ work.work_summary|linebreaksbr|default:"—" }}</dd>
+</dl>
+{% if work.is_open and perms.infrastructure.change_maintenancework %}
+<div class="border rounded p-3" style="max-width:560px">
+  <h2 class="h6">Clôturer l'intervention</h2>
+  <p class="small text-body-secondary">Une intervention corrective remet l'équipement « En service ».</p>
+  <form method="post" action="{% url 'infrastructure:work_close' work.pk %}">{% csrf_token %}
+    {% for field in close_form %}<div class="mb-2"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}</div>{% endfor %}
+    <button class="btn btn-primary">Clôturer</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,9 @@
+# Analyse, IA, imports et rapports (à installer quand un module en a besoin)
+-r requirements.txt
+numpy>=2.0,<2.4
+pandas>=2.2,<2.4
+scikit-learn>=1.5,<1.8
+joblib>=1.4,<1.6
+pulp>=2.8,<3.0
+openpyxl>=3.1,<3.2
+reportlab>=4.2,<4.5
