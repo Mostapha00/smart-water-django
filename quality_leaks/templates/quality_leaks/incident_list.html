@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Incidents de fuite</h1>
+<ul>{% for incident in incidents %}<li><a href="{% url 'quality_leaks:incident_detail' incident.pk %}">{{ incident.reference }}</a> — {{ incident.status }}</li>{% empty %}<li>Aucun incident.</li>{% endfor %}</ul>
+{% endblock %}

@@ -1,6 +1,9 @@
-from django.urls import path  # noqa: F401
+from django.urls import path
+
+from . import views
 
 app_name = "sustainability"
 
-# Student 4 : ajouter ici les URL du module (listes, formulaires, imports CSV...).
-urlpatterns = []
+urlpatterns = [
+    path("", views.dashboard, name="dashboard"),
+]

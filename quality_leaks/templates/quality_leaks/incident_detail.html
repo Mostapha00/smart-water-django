@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ incident.reference }}</h1>
+<p>{{ incident.description }}</p>
+<p>Statut : {{ incident.status }} · Ouvert le {{ incident.opened_at }}</p>
+{% endblock %}

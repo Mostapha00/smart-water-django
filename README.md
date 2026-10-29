@@ -8,11 +8,11 @@ Projet d'école mené par 4 étudiants : une app Django par étudiant, dans un s
 | --- | --- | --- | --- |
 | `accounts` | Profils partagés : `UserProfile` (User abstrait), `NetworkTechnician`, `AuditManager` | Toute l'équipe | Fait |
 | `infrastructure` | Sites, zones, canalisations, pompes, maintenance, maquette 3D | Student 1 | Fait |
-| `consumption` | Compteurs, relevés, tarifs SONEDE/ONAS, factures | Student 2 | À faire |
-| `quality_leaks` | Analyses d'eau, règles d'alerte, incidents de fuite | Student 3 | À faire |
-| `sustainability` | Objectifs d'économie, projets, audits | Student 4 | À faire |
+| `consumption` | Compteurs, relevés, tarifs SONEDE/ONAS, factures | Student 2 | Disponible |
+| `quality_leaks` | Analyses d'eau, règles d'alerte, incidents de fuite | Student 3 | Disponible |
+| `sustainability` | Objectifs d'économie, projets, audits | Student 4 | Disponible |
 
-Chaque app à faire contient un `README.md` et un `models.py` qui listent les classes à écrire, d'après le diagramme de classes du dossier de validation.
+Chaque module contient ses modèles, migrations, vues, tests et interfaces d'administration.
 
 ## Démarrage rapide
 
@@ -31,7 +31,7 @@ python manage.py seed_demo    # site de démonstration « École primaire Ennour
 python manage.py runserver
 ```
 
-Ouvrir http://127.0.0.1:8000, se connecter, puis **Sites › École primaire Ennour › Maquette 3D**.
+Ouvrir http://127.0.0.1:8000, se connecter, puis tester les modules depuis la navigation.
 
 ### Avec PostgreSQL 16
 
@@ -59,7 +59,7 @@ Pages : liste et fiche des sites, zones, équipements, interventions (création,
 
 Page `sites/<id>/maquette/`, alimentée par `sites/<id>/maquette.json` (Three.js, sans build). Elle affiche les zones, les canalisations souterraines, les pompes, l'état des équipements, le risque de panne, les interventions en cours, une chronologie et un mode « Déplacer les zones » qui enregistre `pos_x` / `pos_y`.
 
-Les compteurs (Student 2) et les fuites (Student 3) apparaissent **automatiquement** dès que leurs modèles respectent le contrat décrit dans [`docs/CONTRAT_JSON.md`](docs/CONTRAT_JSON.md). Le scénario « fuite » s'active quand un incident vise une canalisation.
+Les compteurs et les fuites apparaissent automatiquement dans la maquette via le contrat décrit dans [`docs/CONTRAT_JSON.md`](docs/CONTRAT_JSON.md).
 
 Une version autonome avec des données fictives complètes (compteurs, fuite, scénario) est dans `docs/maquette-demo-standalone.html` : il suffit de l'ouvrir dans un navigateur.
 

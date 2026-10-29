@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Analyses de qualité</h1>
+<ul>{% for test in tests %}<li>{{ test.zone }} — {{ test.sampled_at }} — {{ test.potability_probability|default:"non classifiée" }}</li>{% empty %}<li>Aucune analyse.</li>{% endfor %}</ul>
+{% endblock %}

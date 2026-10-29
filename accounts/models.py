@@ -78,5 +78,6 @@ class AuditManager(UserProfile):
         verbose_name_plural = "gestionnaires d'audit"
 
     def approve_budget(self):
-        # À implémenter par Student 4 (validation d'un WaterAuditReport).
-        raise NotImplementedError("approve_budget() : à implémenter dans le module sustainability.")
+        from sustainability.models import WaterAuditReport
+
+        return WaterAuditReport.objects.filter(manager=self).order_by("-period_start").first()

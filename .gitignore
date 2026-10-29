@@ -20,3 +20,6 @@ staticfiles/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local reference material
+django.pdf

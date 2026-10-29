@@ -1,9 +1,8 @@
 """
 Lecture des données des autres modules, sans dépendance forte.
 
-Les modules consumption (Student 2) et quality_leaks (Student 3) ne sont pas encore
-implémentés. Tant que leurs modèles n'existent pas, ces fonctions renvoient None ou [] :
-la maquette et les validations continuent de fonctionner.
+Les modèles optionnels sont resolved dynamically so the infrastructure module keeps
+working during migrations and in installations that do not enable every feature.
 
 Les noms de champs attendus sont ceux du diagramme de classes (voir docs/CONTRAT_JSON.md).
 """

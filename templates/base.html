@@ -20,9 +20,9 @@
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link" href="{% url 'infrastructure:site_list' %}">Sites</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'infrastructure:work_list' %}">Interventions</a></li>
-        <li class="nav-item"><span class="nav-link disabled" title="Module de Student 2">Consommation</span></li>
-        <li class="nav-item"><span class="nav-link disabled" title="Module de Student 3">Qualité &amp; fuites</span></li>
-        <li class="nav-item"><span class="nav-link disabled" title="Module de Student 4">Durabilité</span></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'consumption:meter_list' %}">Consommation</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'quality_leaks:incident_list' %}">Qualité &amp; fuites</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'sustainability:dashboard' %}">Durabilité</a></li>
       </ul>
       <div class="d-flex align-items-center gap-2">
         <span class="small text-body-secondary">{{ user.get_username }}</span>
