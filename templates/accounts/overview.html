@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Comptes et profils{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div><h1>Comptes et profils</h1><p class="text-body-secondary mb-0">Équipe disponible pour les interventions et le suivi réseau.</p></div>
+  {% if user.is_staff %}<a class="btn btn-outline-primary" href="{% url 'admin:index' %}">Gérer dans l'administration</a>{% endif %}
+</div>
+<div class="row g-4">
+  <div class="col-lg-6"><section class="card h-100"><div class="card-body">
+    <h2 class="h5">Techniciens réseau</h2>
+    <div class="list-group list-group-flush">
+      {% for person in technicians %}<div class="list-group-item px-0"><strong>{{ person.display_identity }}</strong><br><span class="text-body-secondary">{{ person.staff_id }} · {{ person.specialty|default:"Spécialité non renseignée" }}</span></div>
+      {% empty %}<p class="text-body-secondary mb-0">Aucun technicien actif.</p>{% endfor %}
+    </div>
+  </div></section></div>
+  <div class="col-lg-6"><section class="card h-100"><div class="card-body">
+    <h2 class="h5">Gestionnaires d'audit</h2>
+    <div class="list-group list-group-flush">
+      {% for person in managers %}<div class="list-group-item px-0"><strong>{{ person.display_identity }}</strong><br><span class="text-body-secondary">{{ person.staff_id }} · {{ person.organization|default:"Organisation non renseignée" }}</span></div>
+      {% empty %}<p class="text-body-secondary mb-0">Aucun gestionnaire actif.</p>{% endfor %}
+    </div>
+  </div></section></div>
+</div>
+{% endblock %}

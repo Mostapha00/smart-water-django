@@ -10,7 +10,6 @@ Projet d'école mené par 4 étudiants : une app Django par étudiant, dans un s
 | `infrastructure` | Sites, zones, canalisations, pompes, maintenance, maquette 3D | Student 1 | Fait |
 | `consumption` | Compteurs, relevés, tarifs SONEDE/ONAS, factures | Student 2 | Disponible |
 | `quality_leaks` | Analyses d'eau, règles d'alerte, incidents de fuite | Student 3 | Disponible |
-| `sustainability` | Objectifs d'économie, projets, audits | Student 4 | Disponible |
 
 Chaque module contient ses modèles, migrations, vues, tests et interfaces d'administration.
 
@@ -101,9 +100,8 @@ aquamind/
 ├── config/              paramètres et URL du projet
 ├── accounts/            profils partagés
 ├── infrastructure/      Student 1 (modèles, services, vues, templates, static, tests)
-├── consumption/         Student 2 (squelette)
-├── quality_leaks/       Student 3 (squelette)
-├── sustainability/      Student 4 (squelette)
+├── consumption/         compteurs, relevés, tarifs et factures
+├── quality_leaks/       qualité de l'eau, règles et incidents
 ├── templates/           base.html, connexion
 ├── static/              CSS commun
 └── docs/                contrat JSON, maquette 3D autonome

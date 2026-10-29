@@ -3,4 +3,9 @@
 <h1>{{ incident.reference }}</h1>
 <p>{{ incident.description }}</p>
 <p>Statut : {{ incident.status }} · Ouvert le {{ incident.opened_at }}</p>
+{% if incident.status != "resolved" %}
+<form method="post" action="{% url 'quality_leaks:incident_resolve' incident.pk %}">
+  {% csrf_token %}<button class="btn btn-success">Marquer comme résolu</button>
+</form>
+{% endif %}
 {% endblock %}

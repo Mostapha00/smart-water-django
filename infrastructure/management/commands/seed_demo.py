@@ -14,6 +14,8 @@ from django.db import transaction
 from django.utils import timezone
 
 from accounts.models import NetworkTechnician
+from consumption.models import MeterReading, TariffBand, WaterBill, WaterMeter
+from quality_leaks.models import AlertRule, LeakIncident, WaterQualityTest
 from infrastructure.models import MaintenanceWork, Site, WaterPipe, WaterPump, WaterZone
 
 SITE_CODE = "SIT-MNB-001"
@@ -34,6 +36,10 @@ class Command(BaseCommand):
         if opts["reset"]:
             site = Site.objects.filter(code=SITE_CODE).first()
             if site:
+                LeakIncident.objects.filter(suspected_pipe__zone__site=site).delete()
+                WaterQualityTest.objects.filter(zone__site=site).delete()
+                WaterBill.objects.filter(meter__zone__site=site).delete()
+                WaterMeter.objects.filter(zone__site=site).delete()
                 MaintenanceWork.objects.filter(pipe__zone__site=site).delete()
                 MaintenanceWork.objects.filter(pump__zone__site=site).delete()
                 WaterPipe.objects.filter(zone__site=site).delete()
@@ -104,6 +110,64 @@ class Command(BaseCommand):
 
         for eq in list(pipes.values()) + list(pumps.values()):
             eq.predict_failure_30d()
+
+        meters = {}
+        for serial, zone_code, category in [
+            ("MTR-ENNOUR-001", "Z-01", WaterMeter.CustomerCategory.PUBLIC),
+            ("MTR-ENNOUR-002", "Z-02", WaterMeter.CustomerCategory.PUBLIC),
+            ("MTR-ENNOUR-003", "Z-03", WaterMeter.CustomerCategory.PUBLIC),
+        ]:
+            meters[serial], _ = WaterMeter.objects.update_or_create(
+                serial_number=serial,
+                defaults={"zone": zones[zone_code], "customer_category": category, "installed_on": date(2022, 1, 10)},
+            )
+        base_day = timezone.localdate().replace(day=1)
+        for serial, values in {
+            "MTR-ENNOUR-001": [("2026-01-01", "120.000"), ("2026-02-01", "148.000"), ("2026-03-01", "179.000")],
+            "MTR-ENNOUR-002": [("2026-01-01", "80.000"), ("2026-02-01", "95.000"), ("2026-03-01", "111.000")],
+            "MTR-ENNOUR-003": [("2026-01-01", "240.000"), ("2026-02-01", "275.000"), ("2026-03-01", "318.000")],
+        }.items():
+            meter = meters[serial]
+            for recorded, index in values:
+                reading, _ = MeterReading.objects.update_or_create(
+                    meter=meter, recorded_at=aware(date.fromisoformat(recorded)),
+                    defaults={"index_m3": Decimal(index), "source": "demo"},
+                )
+            meter.forecast_consumption()
+
+        tariff, _ = TariffBand.objects.update_or_create(
+            service=TariffBand.Service.SONEDE, customer_category=WaterMeter.CustomerCategory.PUBLIC,
+            valid_from=date(2026, 1, 1), lower_bound_m3=Decimal("0"),
+            defaults={"upper_bound_m3": None, "price_per_m3_tnd": Decimal("1.250"), "fixed_fee_tnd": Decimal("2.000")},
+        )
+        bill_meter = meters["MTR-ENNOUR-001"]
+        bill, _ = WaterBill.objects.update_or_create(
+            meter=bill_meter, period_start=date(2026, 2, 1), period_end=date(2026, 2, 28),
+            defaults={"sonede_band": tariff, "volume_m3": Decimal("28.000")},
+        )
+        bill.calculate_amounts()
+
+        rule, _ = AlertRule.objects.update_or_create(
+            name="Turbidité élevée - démonstration",
+            defaults={"version_code": "demo-1", "parameter": "turbidity_ntu", "operator": "gt",
+                      "threshold": Decimal("5"), "unit": "NTU", "severity": "critical",
+                      "source_reference": "Référence démonstration", "active": True},
+        )
+        quality_test, _ = WaterQualityTest.objects.update_or_create(
+            zone=zones["Z-02"], sampled_at=aware(date(2026, 3, 10)),
+            defaults={"laboratory": "Laboratoire municipal", "ph": Decimal("7.2"),
+                      "turbidity_ntu": Decimal("8.5"), "chlorine_mg_l": Decimal("0.3"),
+                      "conductivity_us_cm": Decimal("620")},
+        )
+        quality_test.classify_potability()
+        incident, _ = LeakIncident.objects.update_or_create(
+            reference="FUI-ENNOUR-001",
+            defaults={"meter": meters["MTR-ENNOUR-002"], "trigger_test": quality_test, "rule": rule,
+                      "technician": tarek, "suspected_pipe": pipes["CND-003"],
+                      "status": "investigation", "description": "Baisse de qualité et suspicion sur le raccord de la cantine.",
+                      "trigger_evidence": {"turbidity_ntu": "8.5", "threshold": "5"}},
+        )
+        incident.assess_incident()
 
         if opts["verbosity"]:
             self.stdout.write(self.style.SUCCESS(

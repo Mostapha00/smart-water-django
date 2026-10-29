@@ -68,7 +68,7 @@ class NetworkTechnician(UserProfile):
 
 
 class AuditManager(UserProfile):
-    """Gestionnaire d'audit : budgets, projets d'économie, rapports (Student 4)."""
+    """Gestionnaire responsible for network and quality review."""
 
     staff_id = models.CharField("matricule", max_length=30, unique=True)
     organization = models.CharField("organisation", max_length=150, blank=True)
@@ -76,8 +76,3 @@ class AuditManager(UserProfile):
     class Meta(UserProfile.Meta):
         verbose_name = "gestionnaire d'audit"
         verbose_name_plural = "gestionnaires d'audit"
-
-    def approve_budget(self):
-        from sustainability.models import WaterAuditReport
-
-        return WaterAuditReport.objects.filter(manager=self).order_by("-period_start").first()
