@@ -8,11 +8,23 @@ Projet d'école mené par 4 étudiants : une app Django par étudiant, dans un s
 | --- | --- | --- | --- |
 | `accounts` | Profils partagés : `UserProfile` (User abstrait), `NetworkTechnician`, `AuditManager` | Toute l'équipe | Fait |
 | `infrastructure` | Sites, zones, canalisations, pompes, maintenance, maquette 3D | Student 1 | Fait |
-| `consumption` | Compteurs, relevés, tarifs SONEDE/ONAS, factures | Student 2 | À faire |
+| `consumption` | Compteurs, relevés, tarifs SONEDE/ONAS, factures, prévisions | Student 2 | Backend API + admin |
 | `quality_leaks` | Analyses d'eau, règles d'alerte, incidents de fuite | Student 3 | À faire |
 | `sustainability` | Objectifs d'économie, projets, audits | Student 4 | À faire |
 
-Chaque app à faire contient un `README.md` et un `models.py` qui listent les classes à écrire, d'après le diagramme de classes du dossier de validation.
+Les apps restantes contiennent un `README.md` et un `models.py` qui listent les classes à écrire, d'après le diagramme de classes du dossier de validation.
+
+## Consumption backend (Student 2)
+
+Student 2's backend is available through the authenticated JSON API at `/consommation/` and Django admin at `/admin/consumption/`. It includes meter and reading CRUD, atomic CSV imports, configurable SONEDE/ONAS estimates, immutable issued bills with snapshots, a labelled baseline forecast, and optional LightGBM training. The shared 3D meter contract is preserved.
+
+```bash
+python manage.py migrate
+python manage.py seed_consumption  # fictional demo tariffs, not official rates
+python manage.py forecast_consumption --meter 1 --days 30
+```
+
+See [consumption/README.md](consumption/README.md) for permissions, CSRF, API examples, billing assumptions, optional ML installation, and tests.
 
 ## Démarrage rapide
 
@@ -101,7 +113,7 @@ aquamind/
 ├── config/              paramètres et URL du projet
 ├── accounts/            profils partagés
 ├── infrastructure/      Student 1 (modèles, services, vues, templates, static, tests)
-├── consumption/         Student 2 (squelette)
+├── consumption/         Student 2 (models, services, JSON API, admin, commands, tests)
 ├── quality_leaks/       Student 3 (squelette)
 ├── sustainability/      Student 4 (squelette)
 ├── templates/           base.html, connexion
