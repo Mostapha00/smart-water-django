@@ -127,6 +127,9 @@ LOGOUT_REDIRECT_URL = "login"
 # Modèle IA de risque de panne entraîné hors requête web (joblib). Vide = règle de base.
 AQUAMIND_FAILURE_MODEL_PATH = os.environ.get("AQUAMIND_FAILURE_MODEL_PATH", "")
 
+# Student 2: operator-trained forecast artifacts, separate from uploaded files.
+AQUAMIND_CONSUMPTION_MODEL_DIR = Path(os.environ.get("AQUAMIND_CONSUMPTION_MODEL_DIR", str(MEDIA_ROOT / "consumption_models")))
+
 # Coûts unitaires pour estimate_replacement_cost().
 # VALEURS D'EXEMPLE : à remplacer par des prix validés (devis, bordereau de prix).
 AQUAMIND_REPLACEMENT_COSTS = {

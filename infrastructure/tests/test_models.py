@@ -33,8 +33,15 @@ class SiteZoneTests(TestCase):
         from infrastructure.models import WaterZone
         self.assertEqual(WaterZone.objects.count(), 0)
 
-    def test_meter_coverage_skipped_while_consumption_not_built(self):
-        make_zone(make_site()).validate_meter_coverage()  # pas d'erreur tant que WaterMeter n'existe pas
+    def test_meter_coverage_uses_student_2_models(self):
+        from datetime import date
+        from consumption.models import WaterMeter
+
+        zone = make_zone(make_site())
+        with self.assertRaises(ValidationError):
+            zone.validate_meter_coverage()
+        WaterMeter.objects.create(zone=zone, serial_number="M-COVERAGE", customer_category="school", installed_on=date(2026, 1, 1))
+        zone.validate_meter_coverage()
 
 
 @override_settings(AQUAMIND_REPLACEMENT_COSTS={
