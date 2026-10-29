@@ -16,6 +16,7 @@ from django.utils import timezone
 from accounts.models import NetworkTechnician
 from consumption.models import MeterReading, TariffBand, WaterBill, WaterMeter
 from quality_leaks.models import AlertRule, LeakIncident, WaterQualityTest
+from sustainability.models import AuditReport, ConservationTarget, MeasuredBenefit, OptimizationRun, SustainabilityProject
 from infrastructure.models import MaintenanceWork, Site, WaterPipe, WaterPump, WaterZone
 
 SITE_CODE = "SIT-MNB-001"
@@ -168,6 +169,64 @@ class Command(BaseCommand):
                       "trigger_evidence": {"turbidity_ntu": "8.5", "threshold": "5"}},
         )
         incident.assess_incident()
+
+        ConservationTarget.objects.update_or_create(
+            site=site,
+            name="Réduction annuelle de l'école",
+            defaults={
+                "period_start": date(2026, 1, 1),
+                "period_end": date(2026, 12, 31),
+                "baseline_m3": Decimal("1200"),
+                "target_reduction_percent": Decimal("15"),
+                "department": "Direction de l'école",
+                "notes": "Objectif de démonstration basé sur les relevés des compteurs.",
+            },
+        )
+        project, _ = SustainabilityProject.objects.update_or_create(
+            site=site,
+            name="Réparation du raccord cantine",
+            defaults={
+                "project_type": SustainabilityProject.ProjectType.RETROFIT,
+                "description": "Remplacement du raccord identifié lors de l'analyse de fuite.",
+                "budget_tnd": Decimal("850"),
+                "expected_savings_m3": Decimal("180"),
+                "expected_annual_savings_tnd": Decimal("225"),
+                "status": SustainabilityProject.Status.APPROVED,
+                "start_date": date(2026, 4, 1),
+            },
+        )
+        MeasuredBenefit.objects.update_or_create(
+            project=project,
+            period_start=date(2026, 4, 1),
+            period_end=date(2026, 6, 30),
+            defaults={
+                "measured_savings_m3": Decimal("42"),
+                "measured_savings_tnd": Decimal("52.5"),
+                "verified": True,
+                "evidence": "Comparaison des index avant/après intervention.",
+            },
+        )
+        OptimizationRun.objects.update_or_create(
+            site=site,
+            budget_tnd=Decimal("1000"),
+            defaults={
+                "objective": "water_savings",
+                "solver": "demo",
+                "recommendations": [{"id": project.pk, "name": project.name, "cost_tnd": "850", "savings_m3": "180"}],
+                "total_cost_tnd": Decimal("850"),
+                "projected_savings_m3": Decimal("180"),
+                "projected_annual_savings_tnd": Decimal("225"),
+                "payback_months": Decimal("45.3"),
+            },
+        )
+        AuditReport.objects.update_or_create(
+            site=site,
+            period_start=date(2026, 1, 1),
+            period_end=date(2026, 3, 31),
+            defaults={
+                "snapshot": {"consumption_m3": "180", "active_leaks": 1, "quality_score": "0.75"},
+            },
+        )
 
         if opts["verbosity"]:
             self.stdout.write(self.style.SUCCESS(

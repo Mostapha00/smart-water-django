@@ -1,0 +1,2 @@
+{% extends "base.html" %}
+{% block content %}<h1>Générer un audit PDF</h1><form method="post">{% csrf_token %}<label>Début <input type="date" name="period_start" value="{{ period_start|date:'Y-m-d' }}" class="form-control"></label><label>Fin <input type="date" name="period_end" value="{{ period_end|date:'Y-m-d' }}" class="form-control"></label><button class="btn btn-primary mt-3">Générer</button></form>{% endblock %}

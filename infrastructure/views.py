@@ -38,6 +38,22 @@ class FormTitleMixin:
         return super().form_valid(form)
 
 
+@login_required
+def dashboard(request):
+    sites = Site.objects.count()
+    equipment = len(WaterPipe.objects.all()) + len(WaterPump.objects.all())
+    open_work_count = MaintenanceWork.objects.filter(completed_at__isnull=True).count()
+    high_risk_count = WaterPipe.objects.filter(failure_risk_30d__gte=Decimal("0.6")).count()
+    high_risk_count += WaterPump.objects.filter(failure_risk_30d__gte=Decimal("0.6")).count()
+    return render(request, "infrastructure/dashboard.html", {
+        "site_count": sites,
+        "equipment_count": equipment,
+        "open_work_count": open_work_count,
+        "high_risk_count": high_risk_count,
+        "recent_sites": Site.objects.order_by("-created_at")[:5],
+    })
+
+
 class SafeDeleteMixin:
     """Affiche un message clair quand la suppression est bloquée par des objets liés."""
 

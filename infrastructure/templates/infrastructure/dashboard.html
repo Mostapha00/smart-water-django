@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord infrastructure{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4"><div><h1>Tableau de bord infrastructure</h1><p class="text-body-secondary mb-0">Vue opérationnelle des sites, équipements et interventions.</p></div><a class="btn btn-primary" href="{% url 'infrastructure:site_list' %}">Voir les sites</a></div>
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-body-secondary">Sites</div><div class="display-6">{{ site_count }}</div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-body-secondary">Équipements</div><div class="display-6">{{ equipment_count }}</div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-body-secondary">Interventions ouvertes</div><div class="display-6">{{ open_work_count }}</div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-body-secondary">Risque élevé</div><div class="display-6">{{ high_risk_count }}</div></div></div></div>
+</div>
+<section class="card"><div class="card-body"><h2 class="h5">Sites récents</h2><div class="list-group list-group-flush">{% for site in recent_sites %}<a class="list-group-item list-group-item-action" href="{{ site.get_absolute_url }}">{{ site.code }} · {{ site.name }}</a>{% empty %}<p class="text-body-secondary">Aucun site.</p>{% endfor %}</div></div></section>
+{% endblock %}

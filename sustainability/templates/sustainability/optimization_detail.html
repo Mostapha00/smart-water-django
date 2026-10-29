@@ -1,0 +1,2 @@
+{% extends "base.html" %}
+{% block content %}<h1>Résultat d'optimisation</h1><p>Solver : {{ object.solver }} · Coût : {{ object.total_cost_tnd }} TND · Économies : {{ object.projected_savings_m3 }} m³</p><h2 class="h5">Recommandations</h2><ul>{% for project in object.recommendations %}<li>{{ project.name }} — {{ project.cost_tnd }} TND / {{ project.savings_m3 }} m³</li>{% endfor %}</ul>{% endblock %}

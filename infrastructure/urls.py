@@ -5,6 +5,7 @@ from . import views
 app_name = "infrastructure"
 
 urlpatterns = [
+    path("", views.dashboard, name="dashboard"),
     # Sites
     path("sites/", views.SiteListView.as_view(), name="site_list"),
     path("sites/nouveau/", views.SiteCreateView.as_view(), name="site_create"),

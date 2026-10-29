@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Durabilité & BI{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4"><h1>Tableau de bord exécutif</h1><div class="btn-group"><a class="btn btn-primary" href="{% url 'sustainability:optimize' %}">Optimiser le budget</a><a class="btn btn-outline-primary" href="{% url 'sustainability:audit_report' %}">Rapport PDF</a></div></div>
+<div class="row g-3">
+{% for label,value in metrics.items %}<div class="col-md-4"><div class="card h-100"><div class="card-body"><div class="text-muted">{{ label|title }}</div><div class="display-6">{{ value|default:"—" }}</div></div></div></div>{% endfor %}
+</div>
+<div class="mt-4 d-flex gap-2"><a href="{% url 'sustainability:target_list' %}" class="btn btn-outline-secondary">Cibles</a><a href="{% url 'sustainability:project_list' %}" class="btn btn-outline-secondary">Projets</a><a href="{% url 'sustainability:benefit_list' %}" class="btn btn-outline-secondary">Bénéfices mesurés</a></div>
+{% endblock %}

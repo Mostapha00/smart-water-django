@@ -1,0 +1,2 @@
+{% extends "sustainability/list.html" %}
+{% block content %}<div class="d-flex justify-content-between"><h1>Projets durables</h1><a class="btn btn-primary" href="{% url 'sustainability:project_create' %}">Nouveau projet</a></div><div class="list-group mt-3">{% for object in objects %}<a class="list-group-item list-group-item-action" href="{{ object.get_absolute_url }}">{{ object.name }} · {{ object.budget_tnd }} TND · {{ object.expected_savings_m3 }} m³</a>{% empty %}<p>Aucun projet.</p>{% endfor %}</div>{% endblock %}

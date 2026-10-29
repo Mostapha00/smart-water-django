@@ -1,0 +1,2 @@
+{% extends "sustainability/list.html" %}
+{% block content %}<div class="d-flex justify-content-between"><h1>Bénéfices mesurés</h1><a class="btn btn-primary" href="{% url 'sustainability:benefit_create' %}">Nouveau bénéfice</a></div><div class="list-group mt-3">{% for object in objects %}<a class="list-group-item list-group-item-action" href="{{ object.get_absolute_url }}">{{ object.project }} · {{ object.measured_savings_m3 }} m³ {% if object.verified %}✓{% endif %}</a>{% empty %}<p>Aucun bénéfice.</p>{% endfor %}</div>{% endblock %}

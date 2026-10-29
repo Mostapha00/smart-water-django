@@ -12,4 +12,5 @@ urlpatterns = [
     path("infrastructure/", include("infrastructure.urls")),
     path("consommation/", include("consumption.urls")),
     path("qualite-fuites/", include("quality_leaks.urls")),
+    path("durabilite/", include("sustainability.urls")),
 ]

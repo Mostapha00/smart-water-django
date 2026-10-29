@@ -1,0 +1,2 @@
+{% extends "base.html" %}
+{% block content %}<h1>{{ object }}</h1><dl class="row"><dt class="col-sm-4">Site</dt><dd class="col-sm-8">{{ object.site|default:"Tous les sites" }}</dd><dt class="col-sm-4">Créé le</dt><dd class="col-sm-8">{{ object.created_at }}</dd></dl><a class="btn btn-outline-primary" href="{{ object.get_absolute_url }}modifier/">Modifier</a>{% endblock %}

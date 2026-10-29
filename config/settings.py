@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "infrastructure",    # Student 1 : sites, zones, équipements, maintenance
     "consumption",       # Student 2 : compteurs, relevés, tarifs, factures
     "quality_leaks",     # Student 3 : qualité de l'eau, règles d'alerte, fuites
+    "sustainability",    # Student 4 : conservation, optimisation, audit BI
 ]
 
 MIDDLEWARE = [
