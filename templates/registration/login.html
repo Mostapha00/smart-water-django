@@ -1,14 +1,35 @@
 {% extends "base.html" %}
 {% block title %}Connexion · AquaMind{% endblock %}
 {% block content %}
-<div class="row justify-content-center"><div class="col-sm-8 col-md-5">
-  <h1 class="h3 mb-3">Connexion</h1>
-  {% if form.errors %}<div class="alert alert-danger">Identifiant ou mot de passe incorrect.</div>{% endif %}
-  <form method="post">{% csrf_token %}
-    <div class="mb-3"><label class="form-label" for="id_username">Identifiant</label><input class="form-control" name="username" id="id_username" autofocus required></div>
-    <div class="mb-3"><label class="form-label" for="id_password">Mot de passe</label><input class="form-control" type="password" name="password" id="id_password" required></div>
-    <input type="hidden" name="next" value="{{ next }}">
-    <button class="btn btn-primary">Se connecter</button>
-  </form>
-</div></div>
+<div class="aq-auth">
+  <section class="aq-auth-hero">
+    <a class="aq-brand" href="/"><span class="aq-brand-mark"><i class="bi bi-droplet-half"></i></span><span>AquaMind</span></a>
+    <div>
+      <h2>Chaque goutte compte.</h2>
+      <p>Suivez la consommation d'eau de vos sites, détectez les fuites et pilotez vos économies.</p>
+      <ul class="aq-auth-points">
+        <li><i class="bi bi-speedometer2"></i>Compteurs, relevés et factures SONEDE / ONAS</li>
+        <li><i class="bi bi-moisture"></i>Qualité de l'eau et alertes de fuite</li>
+        <li><i class="bi bi-tree"></i>Objectifs de durabilité et audits</li>
+      </ul>
+    </div>
+  </section>
+  <section class="aq-auth-form">
+    <h1>Connexion</h1>
+    <p class="text-body-secondary mb-4">Connectez-vous pour accéder à votre espace.</p>
+    {% if form.errors %}<div class="alert alert-danger py-2"><i class="bi bi-exclamation-circle me-1"></i>Identifiant ou mot de passe incorrect.</div>{% endif %}
+    <form method="post">{% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label" for="id_username">Identifiant</label>
+        <div class="input-group"><span class="input-group-text"><i class="bi bi-person"></i></span><input class="form-control" name="username" id="id_username" autocomplete="username" autofocus required></div>
+      </div>
+      <div class="mb-4">
+        <label class="form-label" for="id_password">Mot de passe</label>
+        <div class="input-group"><span class="input-group-text"><i class="bi bi-lock"></i></span><input class="form-control" type="password" name="password" id="id_password" autocomplete="current-password" required></div>
+      </div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-primary w-100">Se connecter</button>
+    </form>
+  </section>
+</div>
 {% endblock %}

@@ -1,12 +1,60 @@
 {% extends "base.html" %}
 {% block title %}Tableau de bord infrastructure{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4"><div><h1>Tableau de bord infrastructure</h1><p class="text-body-secondary mb-0">Vue opérationnelle des sites, équipements et interventions.</p></div><a class="btn btn-primary" href="{% url 'infrastructure:site_list' %}">Voir les sites</a></div>
-<div class="row g-3 mb-4">
-  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-body-secondary">Sites</div><div class="display-6">{{ site_count }}</div></div></div></div>
-  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-body-secondary">Équipements</div><div class="display-6">{{ equipment_count }}</div></div></div></div>
-  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-body-secondary">Interventions ouvertes</div><div class="display-6">{{ open_work_count }}</div></div></div></div>
-  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-body-secondary">Risque élevé</div><div class="display-6">{{ high_risk_count }}</div></div></div></div>
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><span>Infrastructure</span></div>
+    <h1>Tableau de bord infrastructure</h1>
+    <p>Vue opérationnelle des sites, équipements et interventions.</p>
+  </div>
+  <div class="aq-page-actions">
+    <a class="btn btn-outline-primary" href="{% url 'infrastructure:work_create' %}"><i class="bi bi-plus-lg"></i>Intervention</a>
+    <a class="btn btn-primary" href="{% url 'infrastructure:site_list' %}"><i class="bi bi-buildings"></i>Voir les sites</a>
+  </div>
 </div>
-<section class="card"><div class="card-body"><h2 class="h5">Sites récents</h2><div class="list-group list-group-flush">{% for site in recent_sites %}<a class="list-group-item list-group-item-action" href="{{ site.get_absolute_url }}">{{ site.code }} · {{ site.name }}</a>{% empty %}<p class="text-body-secondary">Aucun site.</p>{% endfor %}</div></div></section>
+
+<div class="aq-kpis">
+  <a class="aq-kpi blue" href="{% url 'infrastructure:site_list' %}">
+    <span class="aq-kpi-icon"><i class="bi bi-buildings"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Sites</div><div class="aq-kpi-value">{{ site_count }}</div><div class="aq-kpi-foot">surveillés</div></div>
+  </a>
+  <div class="aq-kpi teal">
+    <span class="aq-kpi-icon"><i class="bi bi-gear-wide-connected"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Équipements</div><div class="aq-kpi-value">{{ equipment_count }}</div><div class="aq-kpi-foot">canalisations et pompes</div></div>
+  </div>
+  <a class="aq-kpi amber" href="{% url 'infrastructure:work_list' %}">
+    <span class="aq-kpi-icon"><i class="bi bi-tools"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Interventions ouvertes</div><div class="aq-kpi-value">{{ open_work_count }}</div><div class="aq-kpi-foot">en cours</div></div>
+  </a>
+  <div class="aq-kpi red{% if high_risk_count %} alert{% endif %}">
+    <span class="aq-kpi-icon"><i class="bi bi-exclamation-triangle"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Risque élevé</div><div class="aq-kpi-value">{{ high_risk_count }}</div><div class="aq-kpi-foot">risque de panne ≥ 60 % à 30 j</div></div>
+  </div>
+</div>
+
+<div class="aq-grid-2">
+  <section class="aq-panel">
+    <div class="aq-panel-head"><h2><i class="bi bi-clock-history"></i>Sites récents</h2><a href="{% url 'infrastructure:site_list' %}">Tout voir</a></div>
+    <div class="aq-panel-body">
+      {% for site in recent_sites %}
+      <a class="aq-row" href="{{ site.get_absolute_url }}">
+        <span class="aq-row-icon"><i class="bi bi-building"></i></span>
+        <div class="aq-row-main"><div class="aq-row-title">{{ site.name }}</div><div class="aq-row-sub">{{ site.get_site_type_display }} · {{ site.governorate }}</div></div>
+        <span class="mono">{{ site.code }}</span>
+      </a>
+      {% empty %}
+      <div class="aq-empty"><i class="bi bi-buildings"></i>Aucun site pour l'instant.</div>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="aq-panel">
+    <div class="aq-panel-head"><h2><i class="bi bi-lightning-charge"></i>Actions rapides</h2></div>
+    <div class="aq-actions">
+      <a class="aq-action" href="{% url 'infrastructure:site_create' %}"><i class="bi bi-building-add"></i>Nouveau site<span>Ajouter un site</span></a>
+      <a class="aq-action" href="{% url 'infrastructure:zone_create' %}"><i class="bi bi-bounding-box"></i>Nouvelle zone<span>Découper un site</span></a>
+      <a class="aq-action" href="{% url 'infrastructure:pipe_create' %}"><i class="bi bi-bezier2"></i>Canalisation<span>Ajouter au réseau</span></a>
+      <a class="aq-action" href="{% url 'infrastructure:pump_create' %}"><i class="bi bi-fan"></i>Pompe<span>Ajouter au réseau</span></a>
+    </div>
+  </section>
+</div>
 {% endblock %}

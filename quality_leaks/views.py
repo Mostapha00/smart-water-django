@@ -16,6 +16,7 @@ def dashboard(request):
         "resolved_incidents": LeakIncident.objects.filter(status="resolved").count(),
         "quality_tests": WaterQualityTest.objects.count(),
         "critical_rules": AlertRule.objects.filter(active=True, severity="critical").count(),
+        "recent_incidents": LeakIncident.objects.order_by("-opened_at")[:5],
     })
 
 
