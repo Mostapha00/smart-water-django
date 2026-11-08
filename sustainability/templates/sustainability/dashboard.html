@@ -1,9 +1,52 @@
 {% extends "base.html" %}
 {% block title %}Durabilité & BI{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4"><h1>Tableau de bord exécutif</h1><div class="btn-group"><a class="btn btn-primary" href="{% url 'sustainability:optimize' %}">Optimiser le budget</a><a class="btn btn-outline-primary" href="{% url 'sustainability:audit_report' %}">Rapport PDF</a></div></div>
-<div class="row g-3">
-{% for label,value in metrics.items %}<div class="col-md-4"><div class="card h-100"><div class="card-body"><div class="text-muted">{{ label|title }}</div><div class="display-6">{{ value|default:"—" }}</div></div></div></div>{% endfor %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><span>Durabilité &amp; BI</span></div>
+    <h1>Tableau de bord exécutif</h1>
+    <p>Vue d'ensemble : consommation, fuites, qualité et projets d'économie{% if site %} · {{ site.name }}{% endif %}.</p>
+  </div>
+  <div class="aq-page-actions">
+    <a class="btn btn-outline-primary" href="{% url 'sustainability:audit_report' %}"><i class="bi bi-file-earmark-pdf"></i>Rapport PDF</a>
+    <a class="btn btn-primary" href="{% url 'sustainability:optimize' %}"><i class="bi bi-calculator"></i>Optimiser le budget</a>
+  </div>
 </div>
-<div class="mt-4 d-flex gap-2"><a href="{% url 'sustainability:target_list' %}" class="btn btn-outline-secondary">Cibles</a><a href="{% url 'sustainability:project_list' %}" class="btn btn-outline-secondary">Projets</a><a href="{% url 'sustainability:benefit_list' %}" class="btn btn-outline-secondary">Bénéfices mesurés</a></div>
+
+<div class="aq-kpis cols-3">
+  <a class="aq-kpi blue" href="{% url 'infrastructure:site_list' %}">
+    <span class="aq-kpi-icon"><i class="bi bi-buildings"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Sites</div><div class="aq-kpi-value">{{ metrics.sites }}</div><div class="aq-kpi-foot">dans le périmètre</div></div>
+  </a>
+  <a class="aq-kpi teal" href="{% url 'consumption:dashboard' %}">
+    <span class="aq-kpi-icon"><i class="bi bi-water"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Consommation</div><div class="aq-kpi-value">{{ metrics.consumption_m3|floatformat:1 }}<small>m³</small></div><div class="aq-kpi-foot">d'après les relevés</div></div>
+  </a>
+  <a class="aq-kpi red{% if metrics.active_leaks %} alert{% endif %}" href="{% url 'quality_leaks:incident_list' %}">
+    <span class="aq-kpi-icon"><i class="bi bi-droplet-half"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Fuites actives</div><div class="aq-kpi-value">{{ metrics.active_leaks }}</div><div class="aq-kpi-foot">incidents en investigation</div></div>
+  </a>
+  <a class="aq-kpi green" href="{% url 'quality_leaks:test_list' %}">
+    <span class="aq-kpi-icon"><i class="bi bi-patch-check"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Score qualité</div><div class="aq-kpi-value">{% if metrics.quality_score is not None %}{% widthratio metrics.quality_score 1 100 %}<small>%</small>{% else %}—{% endif %}</div><div class="aq-kpi-foot">probabilité de potabilité moyenne</div></div>
+  </a>
+  <a class="aq-kpi amber" href="{% url 'infrastructure:dashboard' %}">
+    <span class="aq-kpi-icon"><i class="bi bi-gear-wide-connected"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Équipements</div><div class="aq-kpi-value">{{ metrics.equipment }}</div><div class="aq-kpi-foot">canalisations et pompes</div></div>
+  </a>
+  <a class="aq-kpi violet" href="{% url 'sustainability:project_list' %}">
+    <span class="aq-kpi-icon"><i class="bi bi-tree"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Projets d'économie</div><div class="aq-kpi-value">{{ metrics.projects }}</div><div class="aq-kpi-foot">planifiés ou en cours</div></div>
+  </a>
+</div>
+
+<section class="aq-panel">
+  <div class="aq-panel-head"><h2><i class="bi bi-compass"></i>Piloter la durabilité</h2></div>
+  <div class="aq-actions" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    <a class="aq-action" href="{% url 'sustainability:target_list' %}"><i class="bi bi-bullseye"></i>Cibles<span>Objectifs de réduction</span></a>
+    <a class="aq-action" href="{% url 'sustainability:project_list' %}"><i class="bi bi-kanban"></i>Projets<span>Actions d'économie</span></a>
+    <a class="aq-action" href="{% url 'sustainability:benefit_list' %}"><i class="bi bi-graph-up-arrow"></i>Bénéfices mesurés<span>Gains constatés</span></a>
+    <a class="aq-action" href="{% url 'sustainability:audit_list' %}"><i class="bi bi-clipboard-check"></i>Audits<span>Historique des rapports</span></a>
+  </div>
+</section>
 {% endblock %}

@@ -1,5 +1,60 @@
-{% extends "base.html" %}{% block title %}Tableau de bord qualité{% endblock %}{% block content %}
-<h1>Tableau de bord qualité &amp; fuites</h1><p class="text-body-secondary">Surveillance des analyses, alertes et incidents.</p>
-<div class="row g-3 mb-4"><div class="col-md-3"><div class="card"><div class="card-body">Incidents actifs<strong class="display-6 d-block">{{ active_incidents }}</strong></div></div></div><div class="col-md-3"><div class="card"><div class="card-body">Incidents résolus<strong class="display-6 d-block">{{ resolved_incidents }}</strong></div></div></div><div class="col-md-3"><div class="card"><div class="card-body">Tests qualité<strong class="display-6 d-block">{{ quality_tests }}</strong></div></div></div><div class="col-md-3"><div class="card"><div class="card-body">Règles critiques<strong class="display-6 d-block">{{ critical_rules }}</strong></div></div></div></div>
-<div class="d-flex gap-2 flex-wrap"><a class="btn btn-primary" href="{% url 'quality_leaks:incident_list' %}">Incidents</a><a class="btn btn-outline-primary" href="{% url 'quality_leaks:test_list' %}">Tests qualité</a><a class="btn btn-outline-primary" href="{% url 'quality_leaks:rule_list' %}">Règles</a><a class="btn btn-outline-primary" href="{% url 'quality_leaks:incident_create' %}">Nouvel incident</a></div>
+{% extends "base.html" %}
+{% block title %}Tableau de bord qualité{% endblock %}
+{% block content %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><span>Qualité &amp; fuites</span></div>
+    <h1>Tableau de bord qualité &amp; fuites</h1>
+    <p>Surveillance des analyses, alertes et incidents.</p>
+  </div>
+  <div class="aq-page-actions">
+    <a class="btn btn-outline-primary" href="{% url 'quality_leaks:test_create' %}"><i class="bi bi-eyedropper"></i>Nouveau test</a>
+    <a class="btn btn-primary" href="{% url 'quality_leaks:incident_create' %}"><i class="bi bi-plus-lg"></i>Nouvel incident</a>
+  </div>
+</div>
+
+<div class="aq-kpis">
+  <a class="aq-kpi red{% if active_incidents %} alert{% endif %}" href="{% url 'quality_leaks:incident_list' %}">
+    <span class="aq-kpi-icon"><i class="bi bi-droplet-half"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Incidents actifs</div><div class="aq-kpi-value">{{ active_incidents }}</div><div class="aq-kpi-foot">en investigation</div></div>
+  </a>
+  <a class="aq-kpi green" href="{% url 'quality_leaks:incident_list' %}">
+    <span class="aq-kpi-icon"><i class="bi bi-check2-circle"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Incidents résolus</div><div class="aq-kpi-value">{{ resolved_incidents }}</div><div class="aq-kpi-foot">clôturés</div></div>
+  </a>
+  <a class="aq-kpi teal" href="{% url 'quality_leaks:test_list' %}">
+    <span class="aq-kpi-icon"><i class="bi bi-eyedropper"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Tests qualité</div><div class="aq-kpi-value">{{ quality_tests }}</div><div class="aq-kpi-foot">analyses enregistrées</div></div>
+  </a>
+  <a class="aq-kpi amber" href="{% url 'quality_leaks:rule_list' %}">
+    <span class="aq-kpi-icon"><i class="bi bi-bell"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Règles critiques</div><div class="aq-kpi-value">{{ critical_rules }}</div><div class="aq-kpi-foot">actives</div></div>
+  </a>
+</div>
+
+<div class="aq-grid-2">
+  <section class="aq-panel">
+    <div class="aq-panel-head"><h2><i class="bi bi-clock-history"></i>Incidents récents</h2><a href="{% url 'quality_leaks:incident_list' %}">Tout voir</a></div>
+    <div class="aq-panel-body">
+      {% for incident in recent_incidents %}
+      <a class="aq-row" href="{% url 'quality_leaks:incident_detail' incident.pk %}">
+        <span class="aq-row-icon"><i class="bi bi-droplet"></i></span>
+        <div class="aq-row-main"><div class="aq-row-title">{{ incident.reference|default:"Incident" }}</div><div class="aq-row-sub">Ouvert le {{ incident.opened_at|date:"d M Y, H:i" }}{% if incident.description %} · {{ incident.description|truncatechars:60 }}{% endif %}</div></div>
+        <span class="aq-pill {% if incident.status == 'resolved' %}green{% else %}red{% endif %}">{% if incident.status == 'resolved' %}Résolu{% else %}Investigation{% endif %}</span>
+      </a>
+      {% empty %}
+      <div class="aq-empty"><i class="bi bi-shield-check"></i>Aucun incident signalé.</div>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="aq-panel">
+    <div class="aq-panel-head"><h2><i class="bi bi-lightning-charge"></i>Actions rapides</h2></div>
+    <div class="aq-actions">
+      <a class="aq-action" href="{% url 'quality_leaks:incident_list' %}"><i class="bi bi-list-ul"></i>Incidents<span>Suivi des fuites</span></a>
+      <a class="aq-action" href="{% url 'quality_leaks:test_list' %}"><i class="bi bi-eyedropper"></i>Tests qualité<span>Analyses d'eau</span></a>
+      <a class="aq-action" href="{% url 'quality_leaks:rule_list' %}"><i class="bi bi-sliders"></i>Règles<span>Seuils d'alerte</span></a>
+      <a class="aq-action" href="{% url 'quality_leaks:rule_create' %}"><i class="bi bi-plus-circle"></i>Nouvelle règle<span>Créer une alerte</span></a>
+    </div>
+  </section>
+</div>
 {% endblock %}
