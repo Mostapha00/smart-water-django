@@ -43,7 +43,9 @@ class WaterMeter(models.Model):
             raise ValidationError({"horizon_days": "L'horizon doit être positif."})
 
     def forecast_consumption(self, horizon_days=None, save=True):
-        """Forecast volume using the average daily rate of consecutive indexes."""
+        """Forecast volume: trained LightGBM model when available, else the average daily rate."""
+        from .services.forecasting import predict
+
         horizon = int(horizon_days or self.horizon_days)
         if horizon < 1:
             raise ValueError("horizon_days must be positive")
@@ -56,10 +58,14 @@ class WaterMeter(models.Model):
                 rates.append(volume / days)
         if not rates:
             return None
-        prediction = (sum(rates, Decimal("0")) / len(rates) * horizon).quantize(Decimal("0.001"))
+        learned = predict(self, horizon)
+        if learned is not None:
+            prediction, version = Decimal(str(learned[0])).quantize(Decimal("0.001")), learned[1]
+        else:
+            prediction, version = (sum(rates, Decimal("0")) / len(rates) * horizon).quantize(Decimal("0.001")), "average-daily-1"
         self.forecast_m3 = prediction
         self.horizon_days = horizon
-        self.model_version = "average-daily-1"
+        self.model_version = version
         self.predicted_at = timezone.now()
         if save and self.pk:
             self.save(update_fields=["forecast_m3", "horizon_days", "model_version", "predicted_at"])
@@ -102,6 +108,8 @@ class MeterReading(models.Model):
     index_m3 = models.DecimalField(max_digits=14, decimal_places=3, validators=[MinValueValidator(Decimal("0"))])
     source = models.CharField(max_length=30, default="manual")
     anomaly_score = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True)
+    is_anomaly = models.BooleanField("fuite possible", null=True, blank=True,
+                                     help_text="Consommation atypique et supérieure à l'habitude du compteur. Vide = non analysé.")
     model_version = models.CharField(max_length=40, blank=True)
     analyzed_at = models.DateTimeField(null=True, blank=True)
 
@@ -129,22 +137,18 @@ class MeterReading(models.Model):
             raise ValidationError("L'index cumulé est inférieur au relevé précédent.")
         return volume
 
-    def detect_anomaly(self, window=3, threshold=Decimal("1.4"), save=True):
-        volume = self.calculate_volume()
-        if volume is None:
-            return False
-        previous = list(self.meter.readings.filter(recorded_at__lt=self.recorded_at).order_by("-recorded_at")[:window + 1])
-        volumes = [r.calculate_volume() for r in previous]
-        volumes = [v for v in volumes if v is not None and v >= 0]
-        average = sum(volumes, Decimal("0")) / len(volumes) if volumes else Decimal("0")
-        score = (volume / average) if average else Decimal("0")
-        anomalous = bool(average and score > Decimal(str(threshold)))
-        self.anomaly_score = score.quantize(Decimal("0.001")) if average else Decimal("0")
-        self.model_version = "rolling-ratio-1"
-        self.analyzed_at = timezone.now()
-        if save and self.pk:
-            self.save(update_fields=["anomaly_score", "model_version", "analyzed_at"])
-        return anomalous
+    def detect_anomaly(self, save=True):
+        """Possible leak? Isolation Forest over all meters when there is enough data, else a simple rule.
+
+        See consumption/services/anomaly.py. Returns True when this reading is flagged.
+        """
+        from .services.anomaly import analyze, rule_flag
+
+        if not save or not self.pk:
+            return rule_flag(self, save=False)
+        analyze([self.meter])  # scores every reading of this meter in one pass
+        self.refresh_from_db(fields=["anomaly_score", "is_anomaly", "model_version", "analyzed_at"])
+        return bool(self.is_anomaly)
 
 
 class TariffBand(models.Model):
