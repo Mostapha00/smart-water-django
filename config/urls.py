@@ -3,10 +3,14 @@ from django.contrib.auth import views as auth_views
 from django.urls import include, path
 from django.views.generic import RedirectView
 
+from accounts.views import SignUpView
+
 urlpatterns = [
     path("", RedirectView.as_view(pattern_name="infrastructure:site_list", permanent=False)),
     path("admin/", admin.site.urls),
-    path("connexion/", auth_views.LoginView.as_view(template_name="registration/login.html"), name="login"),
+    path("connexion/", auth_views.LoginView.as_view(template_name="registration/login.html",
+                                                    redirect_authenticated_user=True), name="login"),
+    path("inscription/", SignUpView.as_view(), name="signup"),
     path("deconnexion/", auth_views.LogoutView.as_view(), name="logout"),
     path("comptes/", include("accounts.urls")),
     path("infrastructure/", include("infrastructure.urls")),
