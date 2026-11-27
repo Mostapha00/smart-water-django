@@ -9,6 +9,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 
 from .forms import MeterReadingForm, TariffBandForm, WaterBillForm, WaterMeterForm
 from .models import MeterReading, TariffBand, WaterBill, WaterMeter
+from .services.anomaly import analyze as analyze_readings
 
 
 @login_required
@@ -45,6 +46,8 @@ class ReadingCreateView(PermissionRequiredMixin, CreateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
+        if self.object.detect_anomaly():
+            messages.warning(self.request, "Consommation inhabituelle sur ce relevé : fuite possible, à vérifier.")
         self.object.meter.forecast_consumption()
         return response
 
@@ -105,6 +108,9 @@ def meter_import(request, pk):
         imported = meter.import_csv_readings(request.FILES["file"])
     except ValidationError as exc:
         return HttpResponseBadRequest("; ".join(exc.messages))
+    flagged = analyze_readings([meter])["anomalies"]
     meter.forecast_consumption()
     messages.success(request, f"{len(imported)} relevé(s) importé(s).")
+    if flagged:
+        messages.warning(request, f"{flagged} relevé(s) avec une consommation inhabituelle : fuite possible, à vérifier.")
     return redirect("consumption:meter_detail", pk=meter.pk)

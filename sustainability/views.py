@@ -13,7 +13,7 @@ from .forms import ConservationTargetForm, MeasuredBenefitForm, OptimizationRunF
 from .models import AuditReport, ConservationTarget, MeasuredBenefit, OptimizationRun, SustainabilityProject
 from .services.dashboard import executive_metrics
 from .services.optimization import optimize_projects
-from .services.pdf import render_audit_pdf
+from .services.pdf import PdfUnavailable, render_audit_pdf
 
 
 class LoginRequiredMixin:
@@ -192,6 +192,11 @@ def audit_list(request):
 @login_required
 def audit_pdf(request, pk):
     report = get_object_or_404(AuditReport, pk=pk)
-    response = HttpResponse(render_audit_pdf(report), content_type="application/pdf")
+    try:
+        content = render_audit_pdf(report)
+    except PdfUnavailable as exc:
+        messages.error(request, str(exc))
+        return redirect("sustainability:audit_list")
+    response = HttpResponse(content, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="aquamind-audit-{report.pk}.pdf"'
     return response

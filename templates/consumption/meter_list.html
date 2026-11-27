@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% load aquamind_ml %}
 {% block content %}
 <h1>Compteurs d'eau</h1>
 <ul>
   {% for meter in meters %}
     <li><a href="{% url 'consumption:meter_detail' meter.pk %}">{{ meter.serial_number }}</a>
-      — {{ meter.zone }} — prévision: {{ meter.forecast_m3|default:"-" }} m³</li>
+      — {{ meter.zone }} — prévision: {{ meter.forecast_m3|default:"-" }} m³ {% ml_badge meter.model_version %}</li>
   {% empty %}<li>Aucun compteur.</li>{% endfor %}
 </ul>
 {% endblock %}

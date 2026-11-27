@@ -116,6 +116,9 @@ MEDIA_ROOT = BASE_DIR / "media"   # stockage privé : modèles IA, imports, PDF
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Les tests utilisent un dossier de modèles d'IA vide (voir config/test_runner.py).
+TEST_RUNNER = "config.test_runner.IsolatedMLTestRunner"
+
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "infrastructure:site_list"
 LOGOUT_REDIRECT_URL = "login"
@@ -124,7 +127,10 @@ LOGOUT_REDIRECT_URL = "login"
 # Paramètres métier AquaMind
 # ---------------------------------------------------------------------------
 
-# Modèle IA de risque de panne entraîné hors requête web (joblib). Vide = règle de base.
+# Modèles d'IA entraînés HORS requête web (python manage.py train_models), sauvegardés avec joblib.
+# Dossier non versionné (media/ est dans .gitignore). Sans fichier de modèle, une règle simple est utilisée.
+AQUAMIND_ML_DIR = Path(os.environ.get("AQUAMIND_ML_DIR", str(MEDIA_ROOT / "ml")))
+# Chemin explicite du modèle de risque de panne ; vide = AQUAMIND_ML_DIR / "failure_risk.joblib".
 AQUAMIND_FAILURE_MODEL_PATH = os.environ.get("AQUAMIND_FAILURE_MODEL_PATH", "")
 
 # Coûts unitaires pour estimate_replacement_cost().
