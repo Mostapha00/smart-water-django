@@ -23,11 +23,13 @@ git clone https://github.com/<votre-compte>/aquamind.git
 cd aquamind
 python -m venv .venv
 # Windows : .venv\Scripts\activate    ·    macOS / Linux : source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-ml.txt   # application + modèles d'IA (ou requirements.txt sans l'IA)
 cp .env.example .env          # Windows : copy .env.example .env
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py seed_demo    # site de démonstration « École primaire Ennour »
+python manage.py seed_tekup   # site « Technopole El Ghazala » (données estimées)
+python manage.py train_models # entraîne les modèles d'IA et recalcule les prédictions
 python manage.py runserver
 ```
 
@@ -63,15 +65,32 @@ Les compteurs et les fuites apparaissent automatiquement dans la maquette via le
 
 Une version autonome avec des données fictives complètes (compteurs, fuite, scénario) est dans `docs/maquette-demo-standalone.html` : il suffit de l'ouvrir dans un navigateur.
 
-### IA : risque de panne à 30 jours
-
-`infrastructure/services/risk.py`. Sans modèle entraîné, une **règle de base** transparente (âge, pannes récentes, statut) donne un score étiqueté `baseline-0.1`. Ce n'est pas un modèle validé.
-
-Pour brancher un vrai modèle (Random Forest / XGBoost), l'entraîner **hors requête web**, le sauver avec `joblib`, puis renseigner `AQUAMIND_FAILURE_MODEL_PATH`. Les variables d'entrée sont listées dans `FEATURES`. Recalcul global :
+## Intelligence artificielle
 
 ```bash
-python manage.py predict_failures
+pip install -r requirements-ml.txt
+python manage.py train_models                # entraîne puis recalcule tout (à relancer quand les données changent)
+python manage.py train_models --predict-only # recalcule sans réentraîner
 ```
+
+Les modèles sont entraînés **hors requête web** et enregistrés dans `media/ml/` (non versionné, réglable par `AQUAMIND_ML_DIR`). Sans modèle, ou sans `requirements-ml.txt`, chaque fonction utilise une **règle simple** : l'application fonctionne toujours. Chaque page affiche l'origine du résultat : badge vert **Modèle IA**, orange **Modèle IA · démo**, gris **Règle** (balise `{% ml_badge %}`).
+
+| Fonction | Modèle | Règle de secours | Code |
+| --- | --- | --- | --- |
+| Risque de panne à 30 jours | **Random Forest** (scikit-learn) | `baseline-0.1` (âge, pannes, statut) | `infrastructure/services/risk.py`, `risk_training.py` |
+| Fuites possibles sur les relevés | **Isolation Forest** (non supervisé) | `rolling-ratio-1` (> 1,4 × moyenne) | `consumption/services/anomaly.py` |
+| Prévision de consommation | **LightGBM** (un modèle pour tous les compteurs) | `average-daily-1` (moyenne journalière) | `consumption/services/forecasting.py` |
+| Choix des projets sous budget | **PuLP** (programmation linéaire, optimal) | `greedy-fallback` (meilleur ratio d'abord) | `sustainability/services/optimization.py` |
+| Potabilité de l'eau | — | `rules-v1` (seuils pH, turbidité, chlore, conductivité) | `quality_leaks/models.py` |
+
+Choix importants, à connaître pour la soutenance :
+
+- **Random Forest** : apprend sur des « photos » mensuelles des 24 derniers mois. Étiquette = « une intervention corrective a eu lieu dans les 30 jours ». Chaque photo n'utilise que les interventions **antérieures** (pas de triche). Le statut actuel n'est pas une variable : son historique n'est pas enregistré. Avec moins de 30 pannes, le modèle est marqué **démo** : les données de démonstration n'en ont que quelques-unes.
+- **Isolation Forest** : ne demande aucun exemple de fuite. Chaque relevé est comparé au niveau habituel de **son** compteur. Il est signalé seulement s'il est atypique **et** au moins 30 % au-dessus de l'habitude : une baisse n'est pas une fuite, un mois de février plus court non plus. Lancé automatiquement à chaque relevé saisi ou importé. Le score n'est pas une probabilité.
+- **LightGBM** : apprend un multiplicateur saisonnier (« en août × 0,3 ») par rapport au niveau habituel du compteur. Il est testé sur le dernier mois de chaque compteur et **activé seulement s'il fait mieux que la moyenne simple**. Avec les 10 mois de données de démonstration, ce n'est pas le cas (un mois jamais vu ne peut pas être appris) : la règle reste utilisée, et `train_models` l'explique. Il faut au moins un an d'historique réel.
+- **PuLP** : trouve la meilleure combinaison de projets, là où le tri glouton peut se tromper (exemple dans `infrastructure/tests/test_ml.py`).
+
+Les tests (`infrastructure/tests/test_ml.py`) vérifient chaque modèle sur des données construites où la bonne réponse est connue, et utilisent un dossier de modèles vide (`config/test_runner.py`) : un modèle entraîné en local ne change jamais le résultat des tests.
 
 ### Coûts de remplacement
 

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load aquamind_ml %}
 {% block title %}{{ equipment.reference }} · AquaMind{% endblock %}
 {% block content %}
 {% with eq=equipment %}
@@ -33,7 +34,7 @@
   <div class="col-md-6">
     <h2 class="h6 text-body-secondary text-uppercase">Risque de panne à 30 jours</h2>
     {% include "infrastructure/_risk.html" %}
-    <p class="small text-body-secondary mt-2">Modèle : {{ eq.model_version|default:"—" }} · calculé le {{ eq.predicted_at|date:"d/m/Y H:i"|default:"—" }}</p>
+    <p class="small text-body-secondary mt-2">{% ml_badge eq.model_version %} <span class="mono">{{ eq.model_version|default:"" }}</span> · calculé le {{ eq.predicted_at|date:"d/m/Y H:i"|default:"—" }}</p>
     <form method="post" action="{% url 'infrastructure:equipment_predict' eq.kind eq.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary">Recalculer le risque</button></form>
   </div>
 </div>
