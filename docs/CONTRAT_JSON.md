@@ -29,6 +29,6 @@ Noms de champs attendus :
 
 - `consumption.WaterMeter` : `zone` (FK `infrastructure.WaterZone`), `serial_number`, `customer_category`, `forecast_m3`, `horizon_days`
 - `consumption.MeterReading` : `meter` (FK `WaterMeter`), `recorded_at`, `index_m3`
-- `quality_leaks.LeakIncident` : `meter`, `suspected_pipe` (FK `infrastructure.WaterPipe`), `suspected_pump` (FK `infrastructure.WaterPump`), `technician` (FK `accounts.NetworkTechnician`), `rule`, `description`, `opened_at`, `resolved_at` ; optionnel : `position_on_pipe`, `reference`
+- `quality_leaks.LeakIncident` : `meter` (FK `consumption.WaterMeter`, peut être vide pour un incident issu d'une analyse d'eau), `suspected_pipe` (FK `infrastructure.WaterPipe`), `suspected_pump` (FK `infrastructure.WaterPump`), `technician` (FK `accounts.NetworkTechnician`), `rule`, `description`, `opened_at`, `resolved_at` ; optionnel : `position_on_pipe`, `reference`
 
 Un nom différent ? Adapter `integration.py` dans la même pull request.

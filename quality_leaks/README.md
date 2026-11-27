@@ -10,11 +10,15 @@ Classes à implémenter (voir le diagramme de classes du dossier de validation) 
                      méthodes : classify_potability(), evaluate_rules()
 - AlertRule        : name, version_code, parameter, operator, threshold, unit, severity,
                      source_reference, active ; méthode evaluate()
-- LeakIncident     : meter, trigger_reading, trigger_test, rule, technician (FK accounts.NetworkTechnician),
+- LeakIncident     : meter (FK consumption.WaterMeter, optionnel), trigger_test (FK WaterQualityTest, optionnel),
+                     rule (FK AlertRule, optionnel), technician (FK accounts.NetworkTechnician, optionnel),
                      suspected_pipe (FK infrastructure.WaterPipe), suspected_pump (FK infrastructure.WaterPump),
-                     status, description, trigger_evidence (JSON), opened_at, resolved_at
+                     status, description, trigger_evidence (JSON), position_on_pipe (0..1, optionnel),
+                     opened_at, resolved_at
                      méthodes : assess_incident(), resolve()
+                     ⚠️ au moins UNE source : meter OU trigger_test (ou les deux)
                      ⚠️ au plus UNE cible suspectée (pipe OU pump OU aucune)
+                     Le relevé déclencheur n'a pas de FK : ses valeurs sont copiées dans trigger_evidence.
 
 CONTRAT AVEC LA MAQUETTE 3D (infrastructure) — garder ces noms pour que les fuites
 s'affichent automatiquement dans la maquette :
