@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Créer un compte · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-auth">
+  <section class="aq-auth-hero">
+    <a class="aq-brand" href="/"><span class="aq-brand-mark"><i class="bi bi-droplet-half"></i></span><span>AquaMind</span></a>
+    <div>
+      <h2>Rejoignez l'équipe.</h2>
+      <p>Créez votre compte pour consulter les sites, la consommation, la qualité de l'eau et les projets d'économie.</p>
+      <ul class="aq-auth-points">
+        <li><i class="bi bi-eye"></i>Accès en lecture dès l'inscription</li>
+        <li><i class="bi bi-shield-check"></i>Droits de modification attribués par un administrateur</li>
+        <li><i class="bi bi-lock"></i>Mot de passe chiffré, jamais stocké en clair</li>
+      </ul>
+    </div>
+  </section>
+  <section class="aq-auth-form">
+    <h1>Créer un compte</h1>
+    <p class="text-body-secondary mb-4">Votre compte est d'abord en lecture seule.</p>
+    {% if form.non_field_errors %}<div class="alert alert-danger py-2">{% for e in form.non_field_errors %}<div><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>{% endfor %}</div>{% endif %}
+    <form method="post" novalidate>{% csrf_token %}
+      <div class="row g-3">
+        {% for field in form %}
+        <div class="{% if field.name == 'first_name' or field.name == 'last_name' %}col-sm-6{% else %}col-12{% endif %}">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          <div class="input-group{% if field.errors %} has-validation{% endif %}">
+            <span class="input-group-text"><i class="bi {% if field.name == 'username' %}bi-person{% elif field.name == 'email' %}bi-envelope{% elif 'password' in field.name %}bi-lock{% else %}bi-person-vcard{% endif %}"></i></span>
+            {{ field }}
+          </div>
+          {% for e in field.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          {% if field.name == 'password1' %}<div class="form-text small">Au moins 8 caractères, pas seulement des chiffres, pas trop proche de votre identifiant.</div>
+          {% elif field.name == 'username' %}<div class="form-text small">{{ field.help_text }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-primary w-100 mt-4">Créer mon compte</button>
+    </form>
+    <p class="mt-3 mb-0 small text-body-secondary text-center">Déjà inscrit ? <a href="{% url 'login' %}">Se connecter</a></p>
+  </section>
+</div>
+{% endblock %}

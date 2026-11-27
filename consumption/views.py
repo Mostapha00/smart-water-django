@@ -1,11 +1,11 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import CreateView
 from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin
 
 from .forms import MeterReadingForm, TariffBandForm, WaterBillForm, WaterMeterForm
 from .models import MeterReading, TariffBand, WaterBill, WaterMeter
@@ -25,7 +25,8 @@ def dashboard(request):
     return render(request, "consumption/dashboard.html", {"meter_count": meters, "reading_count": readings, "bill_count": bills, "recent_bills": WaterBill.objects.select_related("meter").order_by("-period_end")[:5]})
 
 
-class MeterCreateView(LoginRequiredMixin, CreateView):
+class MeterCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = "consumption.add_watermeter"
     model = WaterMeter
     form_class = WaterMeterForm
     template_name = "consumption/form.html"
@@ -35,7 +36,8 @@ class MeterCreateView(LoginRequiredMixin, CreateView):
 meter_create = MeterCreateView.as_view()
 
 
-class ReadingCreateView(LoginRequiredMixin, CreateView):
+class ReadingCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = "consumption.add_meterreading"
     model = MeterReading
     form_class = MeterReadingForm
     template_name = "consumption/form.html"
@@ -50,7 +52,8 @@ class ReadingCreateView(LoginRequiredMixin, CreateView):
 reading_create = ReadingCreateView.as_view()
 
 
-class TariffCreateView(LoginRequiredMixin, CreateView):
+class TariffCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = "consumption.add_tariffband"
     model = TariffBand
     form_class = TariffBandForm
     template_name = "consumption/form.html"
@@ -60,7 +63,8 @@ class TariffCreateView(LoginRequiredMixin, CreateView):
 tariff_create = TariffCreateView.as_view()
 
 
-class BillCreateView(LoginRequiredMixin, CreateView):
+class BillCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = "consumption.add_waterbill"
     model = WaterBill
     form_class = WaterBillForm
     template_name = "consumption/form.html"
@@ -92,6 +96,7 @@ def meter_detail(request, pk):
 
 
 @login_required
+@permission_required("consumption.add_meterreading", raise_exception=True)
 def meter_import(request, pk):
     meter = get_object_or_404(WaterMeter, pk=pk)
     if request.method != "POST" or "file" not in request.FILES:
