@@ -2,7 +2,8 @@ import json
 from datetime import date, timedelta
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
@@ -32,7 +33,21 @@ class AuthDetailView(LoginRequiredMixin, DetailView):
     template_name = "sustainability/detail.html"
 
 
-class AuthCreateView(LoginRequiredMixin, CreateView):
+class ModelPermissionMixin(PermissionRequiredMixin):
+    """Exige la permission Django du modèle : add_<modèle>, change_<modèle> ou delete_<modèle>.
+
+    Les visiteurs non connectés sont redirigés vers la connexion ; un compte sans droit reçoit 403.
+    """
+
+    permission_action = ""
+
+    def get_permission_required(self):
+        opts = self.model._meta
+        return [f"{opts.app_label}.{self.permission_action}_{opts.model_name}"]
+
+
+class AuthCreateView(ModelPermissionMixin, CreateView):
+    permission_action = "add"
     template_name = "sustainability/form.html"
 
     def form_valid(self, form):
@@ -41,11 +56,13 @@ class AuthCreateView(LoginRequiredMixin, CreateView):
         return response
 
 
-class AuthUpdateView(LoginRequiredMixin, UpdateView):
+class AuthUpdateView(ModelPermissionMixin, UpdateView):
+    permission_action = "change"
     template_name = "sustainability/form.html"
 
 
-class AuthDeleteView(LoginRequiredMixin, DeleteView):
+class AuthDeleteView(ModelPermissionMixin, DeleteView):
+    permission_action = "delete"
     template_name = "sustainability/confirm_delete.html"
     success_url = reverse_lazy("sustainability:dashboard")
 
@@ -124,6 +141,7 @@ def dashboard(request):
 
 
 @login_required
+@permission_required("sustainability.add_optimizationrun", raise_exception=True)
 def optimize(request):
     if request.method == "POST":
         form = OptimizationRunForm(request.POST)
@@ -151,6 +169,7 @@ class OptimizationDetail(AuthDetailView):
 
 
 @login_required
+@permission_required("sustainability.add_auditreport", raise_exception=True)
 def audit_report(request):
     end = date.today()
     start = end - timedelta(days=90)

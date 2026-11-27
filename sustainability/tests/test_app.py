@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
 from django.test import TestCase
 from django.urls import reverse
 
@@ -12,6 +12,8 @@ from sustainability.services.optimization import optimize_projects
 class SustainabilityTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="manager", password="safe-pass-123")
+        # Generating an audit report is a write action: the manager needs this permission.
+        self.user.user_permissions.add(Permission.objects.get(content_type__app_label="sustainability", codename="add_auditreport"))
         self.site = Site.objects.create(code="SUS-01", name="Demo", governorate="Tunis")
         WaterZone.objects.create(site=self.site, code="Z1", name="Atelier")
         self.client.force_login(self.user)

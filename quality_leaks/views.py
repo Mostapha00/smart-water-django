@@ -1,6 +1,6 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView
@@ -39,6 +39,7 @@ class QualityTestListView(LoginRequiredMixin, ListView):
 
 
 @login_required
+@permission_required("quality_leaks.change_leakincident", raise_exception=True)
 def incident_resolve(request, pk):
     if request.method == "POST":
         incident = get_object_or_404(LeakIncident, pk=pk)
@@ -47,7 +48,8 @@ def incident_resolve(request, pk):
     return redirect("quality_leaks:incident_detail", pk=pk)
 
 
-class QualityTestCreateView(LoginRequiredMixin, CreateView):
+class QualityTestCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = "quality_leaks.add_waterqualitytest"
     model = WaterQualityTest
     form_class = WaterQualityTestForm
     template_name = "quality_leaks/form.html"
@@ -59,14 +61,16 @@ class QualityTestCreateView(LoginRequiredMixin, CreateView):
         return response
 
 
-class IncidentCreateView(LoginRequiredMixin, CreateView):
+class IncidentCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = "quality_leaks.add_leakincident"
     model = LeakIncident
     form_class = LeakIncidentForm
     template_name = "quality_leaks/form.html"
     success_url = reverse_lazy("quality_leaks:incident_list")
 
 
-class RuleCreateView(LoginRequiredMixin, CreateView):
+class RuleCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = "quality_leaks.add_alertrule"
     model = AlertRule
     form_class = AlertRuleForm
     template_name = "quality_leaks/form.html"
