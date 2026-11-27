@@ -29,6 +29,11 @@
         {% if user.is_staff %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'admin:index' %}">Admin</a>{% endif %}
         <form method="post" action="{% url 'logout' %}" class="m-0">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">Déconnexion</button></form>
       </div>
+      {% else %}
+      <div class="d-flex align-items-center gap-2 ms-auto">
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'login' %}">Connexion</a>
+        <a class="btn btn-sm btn-primary" href="{% url 'signup' %}">Créer un compte</a>
+      </div>
       {% endif %}
     </div>
   </div>
