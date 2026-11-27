@@ -1,3 +1,5 @@
-# Dépendances du projet AquaMind (même versions sur les 4 PC)
+# Dépendances du projet AquaMind (mêmes versions sur les 4 PC)
 Django>=5.2,<5.3
 psycopg[binary]>=3.2,<3.3        # PostgreSQL 16
+pulp>=2.8,<3.0                   # Durabilité : sélection des projets sous budget (optimisation linéaire)
+reportlab>=4.2,<4.5              # Durabilité : rapport d'audit PDF
