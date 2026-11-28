@@ -72,34 +72,71 @@ class WaterMeter(models.Model):
         return prediction
 
     def import_csv_readings(self, csv_file, source="csv", replace=False):
-        """Import ``recorded_at,index_m3`` rows and return created readings."""
+        """Import ``recorded_at,index_m3`` rows atomically and return the created readings.
+
+        Rows identical to an existing reading are skipped, so the same file can be imported twice.
+        A different index at an existing date, a negative or decreasing index, or a malformed row
+        rejects the whole file: nothing is imported.
+        """
         if hasattr(csv_file, "read"):
             content = csv_file.read()
             if isinstance(content, bytes):
-                content = content.decode("utf-8-sig")
+                try:
+                    content = content.decode("utf-8-sig")
+                except UnicodeDecodeError as exc:
+                    raise ValidationError("Le fichier doit être un CSV encodé en UTF-8.") from exc
         else:
             content = str(csv_file)
         rows = csv.DictReader(io.StringIO(content))
         names = {name.strip().lower() for name in (rows.fieldnames or []) if name}
         if not {"recorded_at", "index_m3"}.issubset(names):
             raise ValidationError("Le CSV doit contenir les colonnes recorded_at et index_m3.")
-        imported = []
+        parsed = {}
+        for line, row in enumerate(rows, start=2):
+            normalized = {str(k).strip().lower(): v for k, v in row.items() if k}
+            try:
+                recorded_at = datetime.fromisoformat((normalized["recorded_at"] or "").strip())
+                if timezone.is_naive(recorded_at):
+                    recorded_at = timezone.make_aware(recorded_at)
+                index = Decimal((normalized["index_m3"] or "").strip())
+            except (KeyError, ValueError, InvalidOperation, AttributeError) as exc:
+                raise ValidationError(f"Ligne {line} invalide : date ISO et index numérique attendus.") from exc
+            if not index.is_finite() or index < 0:
+                raise ValidationError(f"Ligne {line} : un index de compteur doit être un nombre positif.")
+            if parsed.get(recorded_at, index) != index:
+                raise ValidationError(f"Ligne {line} : deux index différents pour la même date.")
+            parsed[recorded_at] = index
+        if not parsed:
+            raise ValidationError("Le CSV ne contient aucun relevé.")
         with transaction.atomic():
             if replace:
                 self.readings.all().delete()
-            for row in rows:
-                normalized = {str(k).strip().lower(): v for k, v in row.items()}
-                try:
-                    recorded_at = datetime.fromisoformat(normalized["recorded_at"].strip())
-                    if timezone.is_naive(recorded_at):
-                        recorded_at = timezone.make_aware(recorded_at)
-                    index = Decimal(normalized["index_m3"].strip())
-                except (KeyError, ValueError, InvalidOperation) as exc:
-                    raise ValidationError(f"Relevé CSV invalide : {row}") from exc
-                if index < 0:
-                    raise ValidationError("Un index de compteur ne peut pas être négatif.")
-                imported.append(self.readings.create(recorded_at=recorded_at, index_m3=index, source=source))
-        return imported
+            existing = dict(self.readings.values_list("recorded_at", "index_m3"))
+            for when, index in parsed.items():
+                if when in existing and existing[when] != index:
+                    raise ValidationError(f"Le relevé du {when:%d/%m/%Y %H:%M} existe déjà avec un autre index.")
+            combined = sorted({**existing, **parsed}.items())
+            if any(later[1] < earlier[1] for earlier, later in zip(combined, combined[1:])):
+                raise ValidationError("L'index cumulé doit augmenter avec le temps : rien n'a été importé.")
+            return [self.readings.create(recorded_at=when, index_m3=index, source=source)
+                    for when, index in sorted(parsed.items()) if when not in existing]
+
+    def index_at(self, when):
+        """Dernier relevé enregistré à la date `when` ou avant (None s'il n'y en a pas)."""
+        return self.readings.filter(recorded_at__lte=when).order_by("-recorded_at", "-pk").first()
+
+    def volume_between(self, start, end):
+        """Volume consommé entre deux instants, d'après les relevés réels (sans interpolation).
+
+        Utilise le dernier relevé avant chaque borne (ou le premier relevé de la période si le compteur
+        a été posé après `start`). Renvoie (volume_m3, premier_relevé, dernier_relevé) ou None si la
+        période ne contient pas deux relevés distincts.
+        """
+        first = self.index_at(start) or self.readings.filter(recorded_at__gte=start, recorded_at__lte=end).order_by("recorded_at", "pk").first()
+        last = self.index_at(end)
+        if first is None or last is None or last.recorded_at <= first.recorded_at:
+            return None
+        return last.index_m3 - first.index_m3, first, last
 
 
 class MeterReading(models.Model):
