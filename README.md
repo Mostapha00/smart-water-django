@@ -33,7 +33,14 @@ python manage.py train_models # entraîne les modèles d'IA et recalcule les pr�
 python manage.py runserver
 ```
 
-Ouvrir http://127.0.0.1:8000, se connecter, puis tester les modules depuis la navigation.
+Ouvrir http://127.0.0.1:8000, se connecter, puis tester les modules depuis la navigation. Un compte créé par « Créer un compte » est en **lecture seule** : un administrateur lui donne des droits dans *Administration › Utilisateurs* (les boutons de création n'apparaissent qu'avec les droits correspondants).
+
+### Parcours de démonstration (scénario du dossier : une fuite)
+
+1. **Enregistrer** : *Consommation › Compteurs › MTR-GHZ-06*. Les relevés, la consommation de chaque période, la prévision et la détection de fuites sont affichés ; « Importer » accepte un CSV `recorded_at,index_m3` (un fichier déjà importé peut être réimporté sans doublon).
+2. **Enquêter** : le dernier relevé est inhabituel (+44 %) → l'incident de fuite est ouvert automatiquement (*Qualité & fuites › Incidents*), avec la preuve copiée. « Compléter » assigne un technicien et la canalisation suspectée. Une analyse d'eau qui enfreint une règle **critique** ouvre aussi un incident.
+3. **Réparer** : depuis l'incident, « Planifier la réparation » crée l'intervention corrective sur l'équipement suspecté ; sa clôture remet l'équipement en service. La maquette 3D du site montre la fuite.
+4. **Mesurer** : la fiche du site affiche la consommation mesurée par zone (90 derniers jours) ; *Durabilité* compare cibles, projets (optimisation PuLP sous budget) et bénéfices **mesurés**, et produit l'audit PDF de la période choisie.
 
 ### Avec PostgreSQL 16
 
@@ -86,7 +93,7 @@ Les modèles sont entraînés **hors requête web** et enregistrés dans `media/
 Choix importants, à connaître pour la soutenance :
 
 - **Random Forest** : apprend sur des « photos » mensuelles des 24 derniers mois. Étiquette = « une intervention corrective a eu lieu dans les 30 jours ». Chaque photo n'utilise que les interventions **antérieures** (pas de triche). Le statut actuel n'est pas une variable : son historique n'est pas enregistré. Avec moins de 30 pannes, le modèle est marqué **démo** : les données de démonstration n'en ont que quelques-unes.
-- **Isolation Forest** : ne demande aucun exemple de fuite. Chaque relevé est comparé au niveau habituel de **son** compteur. Il est signalé seulement s'il est atypique **et** au moins 30 % au-dessus de l'habitude : une baisse n'est pas une fuite, un mois de février plus court non plus. Lancé automatiquement à chaque relevé saisi ou importé. Le score n'est pas une probabilité.
+- **Isolation Forest** : ne demande aucun exemple de fuite. Chaque relevé est comparé au niveau habituel de **son** compteur. Il est signalé seulement s'il est atypique **et** au moins 30 % au-dessus de l'habitude : une baisse n'est pas une fuite, un mois de février plus court non plus. Lancé automatiquement à chaque relevé saisi ou importé. Le score n'est pas une probabilité. Si le **dernier** relevé d'un compteur est signalé, un incident est ouvert (`quality_leaks/services.py`), sans doublon tant qu'un incident est en investigation ; les anciens relevés signalés restent visibles mais n'ouvrent pas d'incident.
 - **LightGBM** : apprend un multiplicateur saisonnier (« en août × 0,3 ») par rapport au niveau habituel du compteur. Il est testé sur le dernier mois de chaque compteur et **activé seulement s'il fait mieux que la moyenne simple**. Avec les 10 mois de données de démonstration, ce n'est pas le cas (un mois jamais vu ne peut pas être appris) : la règle reste utilisée, et `train_models` l'explique. Il faut au moins un an d'historique réel.
 - **PuLP** : trouve la meilleure combinaison de projets, là où le tri glouton peut se tromper (exemple dans `infrastructure/tests/test_ml.py`).
 
@@ -103,6 +110,9 @@ python manage.py test
 ```
 
 GitHub Actions lance les tests à chaque push et pull request (`.github/workflows/tests.yml`).
+
+- `infrastructure/tests/test_workflows.py` rejoue le scénario complet (relevé → incident → réparation → mesure) et **parcourt toutes les pages** de l'application, en administrateur puis en lecture seule, avec les deux sites de démonstration : une page en erreur, un champ inexistant dans un gabarit, ou un lien visible vers une page interdite fait échouer le test.
+- `config/test_runner.py` isole les tests : dossier de modèles d'IA vide et hachage de mot de passe rapide (tests uniquement).
 
 ## Travailler à quatre avec Git
 
