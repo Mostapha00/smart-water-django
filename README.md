@@ -6,11 +6,11 @@ Projet d'école mené par 4 étudiants : une app Django par étudiant, dans un s
 
 | App | Module | Responsable | État |
 | --- | --- | --- | --- |
-| `accounts` | Profils partagés : `UserProfile` (User abstrait), `NetworkTechnician`, `AuditManager` | Toute l'équipe | Fait |
-| `infrastructure` | Sites, zones, canalisations, pompes, maintenance, maquette 3D | Student 1 | Fait |
-| `consumption` | Compteurs, relevés, tarifs SONEDE/ONAS, factures | Student 2 | Disponible |
-| `quality_leaks` | Analyses d'eau, règles d'alerte, incidents de fuite | Student 3 | Disponible |
-| `sustainability` | Cibles, projets d'économie, optimisation budgétaire, audits PDF et BI exécutive | Student 4 | Disponible |
+| `accounts` | Profils partagés : `UserProfile` (User abstrait), `NetworkTechnician`, `AuditManager` ; connexion et création de compte | Toute l'équipe | Fait |
+| `infrastructure` | Sites, zones, canalisations, pompes, maintenance, bilan des compteurs, maquette 3D, risque de panne (Random Forest) | Student 1 | Fait |
+| `consumption` | Compteurs, relevés (saisie, import CSV), détection de fuites (Isolation Forest), prévisions, tarifs SONEDE/ONAS, factures | Student 2 | Fait |
+| `quality_leaks` | Analyses d'eau, règles d'alerte, incidents de fuite ouverts automatiquement | Student 3 | Fait |
+| `sustainability` | Cibles, projets d'économie, bénéfices mesurés, optimisation budgétaire (PuLP), audits PDF et BI exécutive | Student 4 | Fait |
 
 Chaque module contient ses modèles, migrations, vues, tests et interfaces d'administration.
 
@@ -102,6 +102,14 @@ Les tests (`infrastructure/tests/test_ml.py`) vérifient chaque modèle sur des 
 ### Coûts de remplacement
 
 Les prix unitaires de `AQUAMIND_REPLACEMENT_COSTS` (`config/settings.py`) sont des **valeurs d'exemple**, à remplacer par des prix validés.
+
+## Diagramme de classes
+
+Le diagramme du dossier de validation (`validation_dossier.html`, hors dépôt) est **généré à partir des modèles Django** : classes, champs, types, liens et méthodes correspondent toujours au code. Après un changement de modèle :
+
+```bash
+python docs/generate_class_diagram.py ../validation_dossier.html
+```
 
 ## Tests
 
