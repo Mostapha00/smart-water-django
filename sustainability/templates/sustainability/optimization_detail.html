@@ -1,3 +1,30 @@
 {% extends "base.html" %}
 {% load aquamind_ml %}
-{% block content %}<h1>Résultat d'optimisation</h1><p>Solver : {{ object.solver }} {% ml_badge object.solver %} · Coût : {{ object.total_cost_tnd }} TND · Économies : {{ object.projected_savings_m3 }} m³</p><h2 class="h5">Recommandations</h2><ul>{% for project in object.recommendations %}<li>{{ project.name }} — {{ project.cost_tnd }} TND / {{ project.savings_m3 }} m³</li>{% endfor %}</ul>{% endblock %}
+{% block title %}Optimisation · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'sustainability:dashboard' %}">Durabilité &amp; BI</a><i class="bi bi-chevron-right"></i><span>Optimisation</span></div>
+    <h1>Résultat d'optimisation</h1>
+    <p>{% if object.site %}{{ object.site.name }}{% else %}Tous les sites{% endif %} · budget {{ object.budget_tnd|floatformat:0 }} TND · {{ object.created_at|date:"d/m/Y H:i" }} · solveur <span class="mono">{{ object.solver }}</span> {% ml_badge object.solver %}</p>
+  </div>
+  {% if perms.sustainability.add_optimizationrun %}<div class="aq-page-actions"><a class="btn btn-outline-primary" href="{% url 'sustainability:optimize' %}"><i class="bi bi-arrow-repeat"></i>Nouvelle optimisation</a></div>{% endif %}
+</div>
+<div class="aq-kpis">
+  <div class="aq-kpi violet"><span class="aq-kpi-icon"><i class="bi bi-cash-stack"></i></span><div class="aq-kpi-body"><div class="aq-kpi-label">Coût total</div><div class="aq-kpi-value">{{ object.total_cost_tnd|floatformat:0 }}<small>TND</small></div><div class="aq-kpi-foot">sur {{ object.budget_tnd|floatformat:0 }} TND</div></div></div>
+  <div class="aq-kpi teal"><span class="aq-kpi-icon"><i class="bi bi-droplet"></i></span><div class="aq-kpi-body"><div class="aq-kpi-label">Eau économisée</div><div class="aq-kpi-value">{{ object.projected_savings_m3|floatformat:0 }}<small>m³/an</small></div><div class="aq-kpi-foot">estimation</div></div></div>
+  <div class="aq-kpi green"><span class="aq-kpi-icon"><i class="bi bi-piggy-bank"></i></span><div class="aq-kpi-body"><div class="aq-kpi-label">Gain annuel</div><div class="aq-kpi-value">{{ object.projected_annual_savings_tnd|floatformat:0 }}<small>TND</small></div><div class="aq-kpi-foot">estimation</div></div></div>
+  <div class="aq-kpi amber"><span class="aq-kpi-icon"><i class="bi bi-hourglass-split"></i></span><div class="aq-kpi-body"><div class="aq-kpi-label">Retour sur invest.</div><div class="aq-kpi-value">{% if object.payback_months is not None %}{{ object.payback_months|floatformat:0 }}<small>mois</small>{% else %}—{% endif %}</div><div class="aq-kpi-foot">coût / gain annuel</div></div></div>
+</div>
+<section class="aq-panel">
+  <div class="aq-panel-head"><h2><i class="bi bi-check2-square"></i>Projets retenus</h2></div>
+  <div class="aq-panel-body">
+    {% for project in object.recommendations %}
+    <a class="aq-row" href="{% url 'sustainability:project_detail' project.id %}"><span class="aq-row-icon"><i class="bi bi-kanban"></i></span>
+      <div class="aq-row-main"><div class="aq-row-title">{{ project.name }}</div><div class="aq-row-sub">{{ project.savings_m3 }} m³/an</div></div>
+      <div class="aq-row-end">{{ project.cost_tnd }}<small>TND</small></div></a>
+    {% empty %}<div class="aq-empty"><i class="bi bi-inbox"></i>Aucun projet ne rentre dans ce budget (ou aucun projet proposé, approuvé ou en cours).</div>{% endfor %}
+  </div>
+</section>
+{% if object.solver == "PuLP" %}<p class="small text-body-secondary mt-2">PuLP résout un problème de sac à dos : la combinaison retenue économise le plus d'eau possible sans dépasser le budget.</p>{% else %}<p class="small text-body-secondary mt-2">PuLP n'était pas disponible : tri glouton (meilleur rapport m³/TND d'abord), qui peut manquer la meilleure combinaison.</p>{% endif %}
+{% endblock %}

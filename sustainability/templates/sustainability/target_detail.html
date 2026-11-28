@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ object.name }} · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'sustainability:dashboard' %}">Durabilité &amp; BI</a><i class="bi bi-chevron-right"></i><a href="{% url 'sustainability:target_list' %}">Cibles</a><i class="bi bi-chevron-right"></i><span>{{ object.name }}</span></div>
+    <h1>{{ object.name }}</h1>
+    <p><a href="{{ object.site.get_absolute_url }}">{{ object.site.name }}</a> · {{ object.period_start|date:"d/m/Y" }} → {{ object.period_end|date:"d/m/Y" }}{% if object.department %} · {{ object.department }}{% endif %}</p>
+  </div>
+  <div class="aq-page-actions">
+    {% if perms.sustainability.change_conservationtarget %}<a class="btn btn-outline-secondary" href="{% url 'sustainability:target_update' object.pk %}"><i class="bi bi-pencil"></i>Modifier</a>{% endif %}
+    {% if perms.sustainability.delete_conservationtarget %}<a class="btn btn-outline-danger" href="{% url 'sustainability:target_delete' object.pk %}"><i class="bi bi-trash"></i>Supprimer</a>{% endif %}
+  </div>
+</div>
+<div class="aq-kpis">
+  <div class="aq-kpi blue"><span class="aq-kpi-icon"><i class="bi bi-water"></i></span><div class="aq-kpi-body"><div class="aq-kpi-label">Référence</div><div class="aq-kpi-value">{{ object.baseline_m3|floatformat:0 }}<small>m³</small></div><div class="aq-kpi-foot">avant actions</div></div></div>
+  <div class="aq-kpi teal"><span class="aq-kpi-icon"><i class="bi bi-bullseye"></i></span><div class="aq-kpi-body"><div class="aq-kpi-label">Objectif</div><div class="aq-kpi-value">{{ object.target_m3|floatformat:0 }}<small>m³</small></div><div class="aq-kpi-foot">−{{ object.target_reduction_percent|floatformat:"-1" }} %</div></div></div>
+  <div class="aq-kpi amber"><span class="aq-kpi-icon"><i class="bi bi-speedometer2"></i></span><div class="aq-kpi-body"><div class="aq-kpi-label">Mesuré</div><div class="aq-kpi-value">{% if measured_m3 %}{{ measured_m3|floatformat:0 }}<small>m³</small>{% else %}—{% endif %}</div><div class="aq-kpi-foot">relevés de la période</div></div></div>
+  <div class="aq-kpi {% if progress_pct is not None and progress_pct >= 100 %}green{% else %}violet{% endif %}"><span class="aq-kpi-icon"><i class="bi bi-graph-down-arrow"></i></span><div class="aq-kpi-body"><div class="aq-kpi-label">Progression</div><div class="aq-kpi-value">{% if progress_pct is not None %}{{ progress_pct|floatformat:0 }}<small>%</small>{% else %}—{% endif %}</div><div class="aq-kpi-foot">de la réduction visée</div></div></div>
+</div>
+{% if not measured_m3 %}<p class="text-body-secondary small">Pas encore assez de relevés sur cette période pour mesurer la progression.</p>{% endif %}
+{% if object.notes %}<section class="aq-panel"><div class="aq-panel-head"><h2><i class="bi bi-journal"></i>Notes</h2></div><div class="aq-panel-body p-3">{{ object.notes|linebreaksbr }}</div></section>{% endif %}
+{% endblock %}

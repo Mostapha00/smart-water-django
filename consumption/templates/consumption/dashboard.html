@@ -8,8 +8,8 @@
     <p>Compteurs, relevés, tarification et facturation.</p>
   </div>
   <div class="aq-page-actions">
-    <a class="btn btn-outline-primary" href="{% url 'consumption:bill_create' %}"><i class="bi bi-receipt"></i>Nouvelle facture</a>
-    <a class="btn btn-primary" href="{% url 'consumption:reading_create' %}"><i class="bi bi-plus-lg"></i>Nouveau relevé</a>
+    {% if perms.consumption.add_waterbill %}<a class="btn btn-outline-primary" href="{% url 'consumption:bill_create' %}"><i class="bi bi-receipt"></i>Nouvelle facture</a>{% endif %}
+    {% if perms.consumption.add_meterreading %}<a class="btn btn-primary" href="{% url 'consumption:reading_create' %}"><i class="bi bi-plus-lg"></i>Nouveau relevé</a>{% endif %}
   </div>
 </div>
 
@@ -25,6 +25,10 @@
   <a class="aq-kpi violet" href="{% url 'consumption:bill_list' %}">
     <span class="aq-kpi-icon"><i class="bi bi-receipt"></i></span>
     <div class="aq-kpi-body"><div class="aq-kpi-label">Factures</div><div class="aq-kpi-value">{{ bill_count }}</div><div class="aq-kpi-foot">SONEDE / ONAS</div></div>
+  </a>
+  <a class="aq-kpi red{% if anomaly_count %} alert{% endif %}" href="{% url 'consumption:meter_list' %}">
+    <span class="aq-kpi-icon"><i class="bi bi-exclamation-triangle"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Fuites possibles</div><div class="aq-kpi-value">{{ anomaly_count }}</div><div class="aq-kpi-foot">relevés inhabituels</div></div>
   </a>
 </div>
 
@@ -47,7 +51,7 @@
     <div class="aq-panel-head"><h2><i class="bi bi-lightning-charge"></i>Actions rapides</h2></div>
     <div class="aq-actions">
       <a class="aq-action" href="{% url 'consumption:meter_list' %}"><i class="bi bi-speedometer2"></i>Compteurs<span>Liste et détails</span></a>
-      <a class="aq-action" href="{% url 'consumption:meter_create' %}"><i class="bi bi-plus-circle"></i>Nouveau compteur<span>Installer un compteur</span></a>
+      {% if perms.consumption.add_watermeter %}<a class="aq-action" href="{% url 'consumption:meter_create' %}"><i class="bi bi-plus-circle"></i>Nouveau compteur<span>Installer un compteur</span></a>{% else %}<a class="aq-action" href="{% url 'quality_leaks:incident_list' %}"><i class="bi bi-droplet-half"></i>Incidents<span>Fuites signalées</span></a>{% endif %}
       <a class="aq-action" href="{% url 'consumption:tariff_list' %}"><i class="bi bi-tags"></i>Tarifs<span>Tranches SONEDE / ONAS</span></a>
       <a class="aq-action" href="{% url 'consumption:bill_list' %}"><i class="bi bi-receipt"></i>Factures<span>Historique</span></a>
     </div>

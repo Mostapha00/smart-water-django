@@ -1,1 +1,27 @@
-{% extends "base.html" %}{% block content %}<div class="d-flex justify-content-between"><h1>Tarifs</h1><a class="btn btn-primary" href="{% url 'consumption:tariff_create' %}">Nouveau tarif</a></div><table class="table"><tr><th>Service</th><th>Catégorie</th><th>Prix/m³</th><th>Validité</th></tr>{% for tariff in tariffs %}<tr><td>{{ tariff.service }}</td><td>{{ tariff.get_customer_category_display }}</td><td>{{ tariff.price_per_m3_tnd }}</td><td>{{ tariff.valid_from }}{% if tariff.valid_until %} → {{ tariff.valid_until }}{% endif %}</td></tr>{% endfor %}</table>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Tarifs · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'consumption:dashboard' %}">Consommation</a><i class="bi bi-chevron-right"></i><span>Tarifs</span></div>
+    <h1>Tranches tarifaires</h1>
+    <p>Prix SONEDE (eau) et ONAS (assainissement) par catégorie d'abonné. Valeurs à reprendre du barème officiel en vigueur.</p>
+  </div>
+  {% if perms.consumption.add_tariffband %}<div class="aq-page-actions"><a class="btn btn-primary" href="{% url 'consumption:tariff_create' %}"><i class="bi bi-plus-lg"></i>Nouvelle tranche</a></div>{% endif %}
+</div>
+<section class="aq-panel">
+  {% if tariffs %}
+  <div class="table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th>Service</th><th>Catégorie</th><th>Tranche</th><th class="text-end">Prix / m³</th><th class="text-end">Redevance fixe</th><th>Validité</th></tr></thead>
+    <tbody>{% for tariff in tariffs %}
+      <tr><td><span class="aq-pill {% if tariff.service == 'SONEDE' %}blue{% else %}violet{% endif %}">{{ tariff.service }}</span></td>
+        <td>{{ tariff.get_customer_category_display }}</td>
+        <td>{{ tariff.lower_bound_m3|floatformat:0 }} → {% if tariff.upper_bound_m3 is not None %}{{ tariff.upper_bound_m3|floatformat:0 }}{% else %}∞{% endif %} m³</td>
+        <td class="text-end">{{ tariff.price_per_m3_tnd|floatformat:3 }} TND</td>
+        <td class="text-end">{{ tariff.fixed_fee_tnd|floatformat:3 }} TND</td>
+        <td>{{ tariff.valid_from|date:"d/m/Y" }}{% if tariff.valid_until %} → {{ tariff.valid_until|date:"d/m/Y" }}{% else %} → en cours{% endif %}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="aq-empty"><i class="bi bi-tags"></i>Aucune tranche tarifaire.</div>{% endif %}
+</section>
+{% endblock %}

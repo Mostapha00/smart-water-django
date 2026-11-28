@@ -1,11 +1,37 @@
 {% extends "base.html" %}
 {% load aquamind_ml %}
+{% block title %}Compteurs · AquaMind{% endblock %}
 {% block content %}
-<h1>Compteurs d'eau</h1>
-<ul>
-  {% for meter in meters %}
-    <li><a href="{% url 'consumption:meter_detail' meter.pk %}">{{ meter.serial_number }}</a>
-      — {{ meter.zone }} — prévision: {{ meter.forecast_m3|default:"-" }} m³ {% ml_badge meter.model_version %}</li>
-  {% empty %}<li>Aucun compteur.</li>{% endfor %}
-</ul>
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'consumption:dashboard' %}">Consommation</a><i class="bi bi-chevron-right"></i><span>Compteurs</span></div>
+    <h1>Compteurs d'eau</h1>
+    <p>Relevés, prévisions et détection de fuites par compteur.</p>
+  </div>
+  <div class="aq-page-actions">
+    {% if perms.consumption.add_meterreading %}<a class="btn btn-outline-primary" href="{% url 'consumption:reading_create' %}"><i class="bi bi-journal-plus"></i>Nouveau relevé</a>{% endif %}
+    {% if perms.consumption.add_watermeter %}<a class="btn btn-primary" href="{% url 'consumption:meter_create' %}"><i class="bi bi-plus-lg"></i>Nouveau compteur</a>{% endif %}
+  </div>
+</div>
+<section class="aq-panel">
+  {% if meters %}
+  <div class="table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th>Compteur</th><th>Site · zone</th><th>Catégorie</th><th>Dernier relevé</th><th class="text-end">Prévision</th><th>Fuites possibles</th></tr></thead>
+    <tbody>
+    {% for meter in meters %}
+      <tr>
+        <td><a class="fw-semibold mono" href="{% url 'consumption:meter_detail' meter.pk %}">{{ meter.serial_number }}</a>{% if not meter.active %} <span class="aq-pill">inactif</span>{% endif %}</td>
+        <td>{{ meter.zone.site.name }} · {{ meter.zone.name }}</td>
+        <td>{{ meter.get_customer_category_display }}</td>
+        <td>{% if meter.last_reading_at %}{{ meter.last_reading_at|date:"d/m/Y" }} <span class="text-body-secondary small">({{ meter.reading_count }})</span>{% else %}<span class="text-body-secondary">aucun</span>{% endif %}</td>
+        <td class="text-end">{% if meter.forecast_m3 is not None %}{{ meter.forecast_m3|floatformat:1 }} m³ <span class="small text-body-secondary">/ {{ meter.horizon_days }} j</span> {% ml_badge meter.model_version %}{% else %}—{% endif %}</td>
+        <td>{% if meter.anomaly_count %}<span class="aq-pill red">{{ meter.anomaly_count }} relevé{{ meter.anomaly_count|pluralize }}</span>{% else %}<span class="text-body-secondary">—</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <div class="aq-empty"><i class="bi bi-speedometer2"></i>Aucun compteur.{% if perms.consumption.add_watermeter %} <a href="{% url 'consumption:meter_create' %}">Installer le premier.</a>{% endif %}</div>
+  {% endif %}
+</section>
 {% endblock %}

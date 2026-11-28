@@ -8,8 +8,8 @@
     <p>Vue d'ensemble : consommation, fuites, qualité et projets d'économie{% if site %} · {{ site.name }}{% endif %}.</p>
   </div>
   <div class="aq-page-actions">
-    <a class="btn btn-outline-primary" href="{% url 'sustainability:audit_report' %}"><i class="bi bi-file-earmark-pdf"></i>Rapport PDF</a>
-    <a class="btn btn-primary" href="{% url 'sustainability:optimize' %}"><i class="bi bi-calculator"></i>Optimiser le budget</a>
+    {% if perms.sustainability.add_auditreport %}<a class="btn btn-outline-primary" href="{% url 'sustainability:audit_report' %}"><i class="bi bi-file-earmark-pdf"></i>Rapport PDF</a>{% endif %}
+    {% if perms.sustainability.add_optimizationrun %}<a class="btn btn-primary" href="{% url 'sustainability:optimize' %}"><i class="bi bi-calculator"></i>Optimiser le budget</a>{% endif %}
   </div>
 </div>
 

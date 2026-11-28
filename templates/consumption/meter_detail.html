@@ -1,15 +1,80 @@
 {% extends "base.html" %}
 {% load aquamind_ml %}
+{% block title %}Compteur {{ meter.serial_number }} · AquaMind{% endblock %}
 {% block content %}
-<h1>Compteur {{ meter.serial_number }}</h1>
-<p>Zone : {{ meter.zone }} · Prévision : {{ meter.forecast_m3|default:"-" }} m³ / {{ meter.horizon_days }} jours {% ml_badge meter.model_version %}</p>
-<form method="post" enctype="multipart/form-data" action="{% url 'consumption:meter_import' meter.pk %}">
-  {% csrf_token %}<input type="file" name="file" accept=".csv" required><button>Importer CSV</button>
-</form>
-{% with analysed=readings.last %}<p class="small text-body-secondary mt-3 mb-1">Détection de fuites : {% ml_badge analysed.model_version %} — score &gt; 0 = consommation atypique (ce n'est pas une probabilité).</p>{% endwith %}
-<table><tr><th>Date</th><th>Index (m³)</th><th>Anomalie</th><th>Score</th></tr>
-{% for reading in readings %}<tr><td>{{ reading.recorded_at }}</td><td>{{ reading.index_m3 }}</td>
-<td>{% if reading.is_anomaly %}<span class="badge text-bg-danger">Fuite possible</span>{% elif reading.is_anomaly is False %}Normal{% else %}-{% endif %}</td>
-<td>{{ reading.anomaly_score|default:"-" }}</td></tr>
-{% empty %}<tr><td colspan="4">Aucun relevé.</td></tr>{% endfor %}</table>
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'consumption:dashboard' %}">Consommation</a><i class="bi bi-chevron-right"></i><a href="{% url 'consumption:meter_list' %}">Compteurs</a><i class="bi bi-chevron-right"></i><span>{{ meter.serial_number }}</span></div>
+    <h1 class="mono">{{ meter.serial_number }}</h1>
+    <p><a href="{{ meter.zone.site.get_absolute_url }}">{{ meter.zone.site.name }}</a> · {{ meter.zone.name }} · {{ meter.get_customer_category_display }}{% if not meter.active %} · <span class="aq-pill">inactif</span>{% endif %}</p>
+  </div>
+  <div class="aq-page-actions">
+    {% if perms.consumption.add_meterreading %}<a class="btn btn-primary" href="{% url 'consumption:reading_create' %}?meter={{ meter.pk }}"><i class="bi bi-journal-plus"></i>Nouveau relevé</a>{% endif %}
+    {% if perms.consumption.add_waterbill %}<a class="btn btn-outline-primary" href="{% url 'consumption:bill_create' %}?meter={{ meter.pk }}"><i class="bi bi-receipt"></i>Facturer</a>{% endif %}
+    {% if perms.consumption.change_watermeter %}<a class="btn btn-outline-secondary" href="{% url 'consumption:meter_update' meter.pk %}"><i class="bi bi-pencil"></i>Modifier</a>{% endif %}
+  </div>
+</div>
+
+<div class="aq-kpis cols-3">
+  <div class="aq-kpi teal">
+    <span class="aq-kpi-icon"><i class="bi bi-graph-up"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Prévision {{ meter.horizon_days }} jours</div><div class="aq-kpi-value">{% if meter.forecast_m3 is not None %}{{ meter.forecast_m3|floatformat:1 }}<small>m³</small>{% else %}—{% endif %}</div><div class="aq-kpi-foot">{% ml_badge meter.model_version %}</div></div>
+  </div>
+  <div class="aq-kpi blue">
+    <span class="aq-kpi-icon"><i class="bi bi-speedometer"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Dernier index</div><div class="aq-kpi-value">{% if last_reading %}{{ last_reading.index_m3|floatformat:0 }}<small>m³</small>{% else %}—{% endif %}</div><div class="aq-kpi-foot">{% if last_reading %}le {{ last_reading.recorded_at|date:"d/m/Y" }}{% else %}aucun relevé{% endif %}</div></div>
+  </div>
+  <div class="aq-kpi red">
+    <span class="aq-kpi-icon"><i class="bi bi-exclamation-triangle"></i></span>
+    <div class="aq-kpi-body"><div class="aq-kpi-label">Détection de fuites</div><div class="aq-kpi-value">{% if last_reading.is_anomaly %}Alerte{% elif last_reading.is_anomaly is False %}Normal{% else %}—{% endif %}</div><div class="aq-kpi-foot">{% if last_reading %}{% ml_badge last_reading.model_version %}{% else %}aucun relevé{% endif %}</div></div>
+  </div>
+</div>
+
+<div class="aq-grid-2">
+  <section class="aq-panel">
+    <div class="aq-panel-head"><h2><i class="bi bi-journal-text"></i>Relevés</h2></div>
+    {% if rows %}
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Date</th><th class="text-end">Index (m³)</th><th class="text-end">Consommation</th><th>Analyse</th></tr></thead>
+      <tbody>
+      {% for row in rows %}{% with r=row.reading %}
+        <tr{% if r.is_anomaly %} class="table-danger"{% endif %}>
+          <td>{{ r.recorded_at|date:"d/m/Y H:i" }} {% if r.source == "csv" %}<span class="small text-body-secondary">CSV</span>{% endif %}</td>
+          <td class="text-end mono">{{ r.index_m3|floatformat:3 }}</td>
+          <td class="text-end">{% if row.volume is not None %}{{ row.volume|floatformat:1 }} m³{% else %}<span class="text-body-secondary small">premier relevé</span>{% endif %}</td>
+          <td>{% if r.is_anomaly %}<span class="aq-pill red" title="Score {{ r.anomaly_score }} : consommation atypique (pas une probabilité)">Fuite possible</span>{% elif r.is_anomaly is False %}<span class="text-body-secondary small">normal</span>{% else %}<span class="text-body-secondary small">—</span>{% endif %}</td>
+        </tr>
+      {% endwith %}{% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}
+    <div class="aq-empty"><i class="bi bi-journal"></i>Aucun relevé.</div>
+    {% endif %}
+  </section>
+
+  <div>
+    {% if perms.consumption.add_meterreading %}
+    <section class="aq-panel mb-3">
+      <div class="aq-panel-head"><h2><i class="bi bi-filetype-csv"></i>Importer des relevés</h2></div>
+      <div class="aq-panel-body p-3">
+        <form method="post" enctype="multipart/form-data" action="{% url 'consumption:meter_import' meter.pk %}" class="d-flex gap-2 flex-wrap">
+          {% csrf_token %}<input class="form-control" style="max-width: 320px" type="file" name="file" accept=".csv" required>
+          <button class="btn btn-outline-primary"><i class="bi bi-upload me-1"></i>Importer</button>
+        </form>
+        <div class="form-text">Colonnes <code>recorded_at,index_m3</code> (date ISO, index cumulé). Un fichier déjà importé peut être réimporté sans doublon.</div>
+      </div>
+    </section>
+    {% endif %}
+    <section class="aq-panel">
+      <div class="aq-panel-head"><h2><i class="bi bi-receipt"></i>Dernières factures</h2><a href="{% url 'consumption:bill_list' %}">Tout voir</a></div>
+      <div class="aq-panel-body">
+        {% for bill in bills %}
+        <div class="aq-row"><span class="aq-row-icon"><i class="bi bi-file-earmark-text"></i></span>
+          <div class="aq-row-main"><div class="aq-row-title">{{ bill.period_start|date:"d/m/Y" }} → {{ bill.period_end|date:"d/m/Y" }}</div><div class="aq-row-sub">{{ bill.volume_m3|floatformat:1 }} m³</div></div>
+          <div class="aq-row-end">{{ bill.total_amount_tnd|floatformat:3 }}<small>TND</small></div></div>
+        {% empty %}<div class="aq-empty"><i class="bi bi-receipt"></i>Aucune facture.</div>{% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
 {% endblock %}

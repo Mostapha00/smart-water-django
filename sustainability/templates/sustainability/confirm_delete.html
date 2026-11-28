@@ -1,2 +1,15 @@
 {% extends "base.html" %}
-{% block content %}<h1>Supprimer</h1><p>Confirmer la suppression de « {{ object }} » ?</p><form method="post">{% csrf_token %}<button class="btn btn-danger">Supprimer</button></form>{% endblock %}
+{% block title %}{{ page_title }} · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head"><div>
+  <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{{ module_url }}">{{ module_label }}</a><i class="bi bi-chevron-right"></i><span>Supprimer</span></div>
+  <h1>{{ page_title }}</h1>
+</div></div>
+<section class="aq-panel" style="max-width: 620px"><div class="aq-panel-body p-4">
+  <p>Cette suppression est définitive.</p>
+  <form method="post" class="d-flex gap-2">{% csrf_token %}
+    <button class="btn btn-danger"><i class="bi bi-trash me-1"></i>Supprimer</button>
+    <a class="btn btn-outline-secondary" href="{{ object.get_absolute_url }}">Annuler</a>
+  </form>
+</div></section>
+{% endblock %}

@@ -44,7 +44,8 @@ class Command(BaseCommand):
         self.stdout.write(f"Prévisions recalculées : {self._fmt(versions) or 'aucun compteur avec 2 relevés'}")
 
         result = analyze()
-        self.stdout.write(f"Anomalies ({result['version']}) : {result['anomalies']} relevé(s) signalé(s) sur {result['analyzed']}")
+        self.stdout.write(f"Anomalies ({result['version']}) : {result['anomalies']} relevé(s) signalé(s) sur {result['analyzed']}, "
+                          f"{result['incidents_opened']} incident(s) de fuite ouvert(s)")
         self.stdout.write(self.style.SUCCESS("Terminé."))
 
     def _train(self, label, train, describe):

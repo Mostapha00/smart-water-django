@@ -1,1 +1,27 @@
-{% extends "base.html" %}{% block content %}<div class="d-flex justify-content-between"><h1>Factures</h1><a class="btn btn-primary" href="{% url 'consumption:bill_create' %}">Nouvelle facture</a></div><table class="table"><tr><th>Compteur</th><th>Période</th><th>Volume</th><th>Total</th></tr>{% for bill in bills %}<tr><td>{{ bill.meter }}</td><td>{{ bill.period_start }} → {{ bill.period_end }}</td><td>{{ bill.volume_m3 }} m³</td><td>{{ bill.total_amount_tnd }} TND</td></tr>{% endfor %}</table>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Factures · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'consumption:dashboard' %}">Consommation</a><i class="bi bi-chevron-right"></i><span>Factures</span></div>
+    <h1>Factures</h1>
+    <p>Montants calculés à partir des tranches SONEDE / ONAS, hors taxes. Les tarifs appliqués sont gardés avec chaque facture.</p>
+  </div>
+  {% if perms.consumption.add_waterbill %}<div class="aq-page-actions"><a class="btn btn-primary" href="{% url 'consumption:bill_create' %}"><i class="bi bi-plus-lg"></i>Nouvelle facture</a></div>{% endif %}
+</div>
+<section class="aq-panel">
+  {% if bills %}
+  <div class="table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th>Compteur</th><th>Période</th><th class="text-end">Volume</th><th class="text-end">SONEDE</th><th class="text-end">ONAS</th><th class="text-end">Total</th></tr></thead>
+    <tbody>{% for bill in bills %}
+      <tr><td><a class="mono" href="{% url 'consumption:meter_detail' bill.meter_id %}">{{ bill.meter }}</a></td>
+        <td>{{ bill.period_start|date:"d/m/Y" }} → {{ bill.period_end|date:"d/m/Y" }}</td>
+        <td class="text-end">{{ bill.volume_m3|floatformat:1 }} m³</td>
+        <td class="text-end">{{ bill.sonede_amount_tnd|floatformat:3 }}</td>
+        <td class="text-end">{{ bill.onas_amount_tnd|floatformat:3 }}</td>
+        <td class="text-end fw-semibold">{{ bill.total_amount_tnd|floatformat:3 }} TND</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="aq-empty"><i class="bi bi-receipt"></i>Aucune facture.</div>{% endif %}
+</section>
+{% endblock %}

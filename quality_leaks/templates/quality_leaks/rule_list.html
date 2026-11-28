@@ -1,1 +1,30 @@
-{% extends "base.html" %}{% block content %}<div class="d-flex justify-content-between"><h1>Règles d'alerte</h1><a class="btn btn-primary" href="{% url 'quality_leaks:rule_create' %}">Nouvelle règle</a></div><table class="table"><tr><th>Nom</th><th>Paramètre</th><th>Condition</th><th>Sévérité</th><th>Active</th></tr>{% for rule in rules %}<tr><td>{{ rule.name }}</td><td>{{ rule.parameter }}</td><td>{{ rule.operator }} {{ rule.threshold }}</td><td>{{ rule.severity }}</td><td>{{ rule.active|yesno:"Oui,Non" }}</td></tr>{% endfor %}</table>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Règles d'alerte · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'quality_leaks:dashboard' %}">Qualité &amp; fuites</a><i class="bi bi-chevron-right"></i><span>Règles</span></div>
+    <h1>Règles d'alerte</h1>
+    <p>Seuils vérifiés à chaque analyse. Une règle « critical » ouvre automatiquement un incident.</p>
+  </div>
+  {% if perms.quality_leaks.add_alertrule %}<div class="aq-page-actions"><a class="btn btn-primary" href="{% url 'quality_leaks:rule_create' %}"><i class="bi bi-plus-lg"></i>Nouvelle règle</a></div>{% endif %}
+</div>
+<section class="aq-panel">
+  {% if rules %}
+  <div class="table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th>Nom</th><th>Condition d'alerte</th><th>Sévérité</th><th>Version</th><th>Source</th><th>État</th>{% if perms.quality_leaks.change_alertrule %}<th></th>{% endif %}</tr></thead>
+    <tbody>{% for rule in rules %}
+      <tr{% if not rule.active %} class="text-body-secondary"{% endif %}>
+        <td class="fw-semibold">{{ rule.name }}</td>
+        <td class="mono">{{ rule.get_parameter_display }} {{ rule.operator }} {{ rule.threshold|floatformat:"-4" }} {{ rule.unit }}</td>
+        <td><span class="aq-pill {% if rule.severity == 'critical' %}red{% elif rule.severity == 'warning' %}amber{% else %}blue{% endif %}">{{ rule.get_severity_display }}</span></td>
+        <td class="mono">{{ rule.version_code }}</td>
+        <td class="small">{{ rule.source_reference|default:"—" }}</td>
+        <td>{% if rule.active %}active{% else %}désactivée{% endif %}</td>
+        {% if perms.quality_leaks.change_alertrule %}<td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{% url 'quality_leaks:rule_update' rule.pk %}">Modifier</a></td>{% endif %}
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="aq-empty"><i class="bi bi-bell"></i>Aucune règle.</div>{% endif %}
+</section>
+{% endblock %}

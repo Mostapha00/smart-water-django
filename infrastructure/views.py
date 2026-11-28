@@ -1,3 +1,4 @@
+from datetime import timedelta
 import json
 from decimal import Decimal, InvalidOperation
 
@@ -10,10 +11,12 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.decorators.http import require_POST
+from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from .forms import CloseWorkForm, MaintenanceWorkForm, SiteForm, WaterPipeForm, WaterPumpForm, WaterZoneForm
 from .models import MaintenanceWork, Site, WaterPipe, WaterPump, WaterZone
+from .services.integration import open_incidents_for_site
 from .services.maquette import build_payload
 
 
@@ -102,6 +105,9 @@ class SiteDetailView(LoginRequiredMixin, DetailView):
             "open_works": MaintenanceWork.objects.filter(Q(pipe__zone__site=site) | Q(pump__zone__site=site), completed_at__isnull=True)
                           .select_related("pipe", "pump", "technician"),
         })
+        now = timezone.now()
+        ctx["balance"] = site.calculate_water_balance(now - timedelta(days=90), now)
+        ctx["site_incidents"] = open_incidents_for_site(site)
         try:
             site.validate_structure()
             ctx["structure_error"] = None
