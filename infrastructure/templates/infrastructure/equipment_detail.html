@@ -7,9 +7,9 @@
 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
   <div><h1 class="h3 m-0 mono">{{ eq.reference }}</h1><div>{% if eq.kind == "pipe" %}Canalisation (WaterPipe){% else %}Pompe (WaterPump){% endif %} · {% include "infrastructure/_status.html" %}</div></div>
   <div class="d-flex gap-2 flex-wrap">
-    <a class="btn btn-primary" href="{% url 'infrastructure:work_create' %}?{{ eq.kind }}={{ eq.pk }}">Planifier une maintenance</a>
-    <a class="btn btn-outline-secondary" href="{% if eq.kind == 'pipe' %}{% url 'infrastructure:pipe_update' eq.pk %}{% else %}{% url 'infrastructure:pump_update' eq.pk %}{% endif %}">Modifier</a>
-    <a class="btn btn-outline-danger" href="{% if eq.kind == 'pipe' %}{% url 'infrastructure:pipe_delete' eq.pk %}{% else %}{% url 'infrastructure:pump_delete' eq.pk %}{% endif %}">Supprimer</a>
+    {% if perms.infrastructure.add_maintenancework %}<a class="btn btn-primary" href="{% url 'infrastructure:work_create' %}?{{ eq.kind }}={{ eq.pk }}">Planifier une maintenance</a>{% endif %}
+    {% if eq.kind == 'pipe' and perms.infrastructure.change_waterpipe or eq.kind == 'pump' and perms.infrastructure.change_waterpump %}<a class="btn btn-outline-secondary" href="{% if eq.kind == 'pipe' %}{% url 'infrastructure:pipe_update' eq.pk %}{% else %}{% url 'infrastructure:pump_update' eq.pk %}{% endif %}">Modifier</a>{% endif %}
+    {% if eq.kind == 'pipe' and perms.infrastructure.delete_waterpipe or eq.kind == 'pump' and perms.infrastructure.delete_waterpump %}<a class="btn btn-outline-danger" href="{% if eq.kind == 'pipe' %}{% url 'infrastructure:pipe_delete' eq.pk %}{% else %}{% url 'infrastructure:pump_delete' eq.pk %}{% endif %}">Supprimer</a>{% endif %}
   </div>
 </div>
 <div class="row g-4">
@@ -35,7 +35,7 @@
     <h2 class="h6 text-body-secondary text-uppercase">Risque de panne à 30 jours</h2>
     {% include "infrastructure/_risk.html" %}
     <p class="small text-body-secondary mt-2">{% ml_badge eq.model_version %} <span class="mono">{{ eq.model_version|default:"" }}</span> · calculé le {{ eq.predicted_at|date:"d/m/Y H:i"|default:"—" }}</p>
-    <form method="post" action="{% url 'infrastructure:equipment_predict' eq.kind eq.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary">Recalculer le risque</button></form>
+    {% if eq.kind == 'pipe' and perms.infrastructure.change_waterpipe or eq.kind == 'pump' and perms.infrastructure.change_waterpump %}<form method="post" action="{% url 'infrastructure:equipment_predict' eq.kind eq.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary">Recalculer le risque</button></form>{% endif %}
   </div>
 </div>
 <h2 class="h5 mt-4">Historique des interventions</h2>

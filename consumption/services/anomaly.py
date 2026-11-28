@@ -15,6 +15,9 @@ anomaly_score > 0 = atypique (plus il est grand, plus c'est inhabituel). Ce n'es
 
 Sans scikit-learn ou avec moins de MIN_SAMPLES intervalles : règle simple « rolling-ratio-1 »
 (consommation > 1,4 × moyenne des intervalles précédents).
+
+Si le DERNIER relevé d'un compteur est signalé, un incident de fuite est ouvert automatiquement
+(quality_leaks/services.py), sans doublon tant qu'un incident est en investigation.
 """
 from __future__ import annotations
 
@@ -94,7 +97,26 @@ def analyze(meters=None) -> dict:
         version = RULE_VERSION
 
     MeterReading.objects.bulk_update(changed, ["anomaly_score", "is_anomaly", "model_version", "analyzed_at"], batch_size=500)
-    return {"version": version, "analyzed": len(changed), "anomalies": sum(1 for r in changed if r.is_anomaly)}
+    opened = _open_incidents({meter_id: per_meter[meter_id] for meter_id in targets if per_meter.get(meter_id)})
+    return {"version": version, "analyzed": len(changed), "anomalies": sum(1 for r in changed if r.is_anomaly),
+            "incidents_opened": opened}
+
+
+def _open_incidents(per_meter) -> int:
+    """Ouvre un incident quand le DERNIER relevé d'un compteur est signalé.
+
+    Les anciens relevés signalés restent visibles sur la fiche du compteur, mais n'ouvrent pas
+    d'incident aujourd'hui : seule la situation actuelle demande une intervention.
+    """
+    from quality_leaks.services import open_leak_incident
+
+    opened = 0
+    for intervals in per_meter.values():
+        reading, rate, _days = intervals[-1]
+        if reading.is_anomaly:
+            usual = median(r for _, r, _ in intervals)
+            opened += open_leak_incident(reading, rate, usual) is not None
+    return opened
 
 
 def rule_flag(reading, window=3, threshold=Decimal("1.4"), save=True, now=None) -> bool:

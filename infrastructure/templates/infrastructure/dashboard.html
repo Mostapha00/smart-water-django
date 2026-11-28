@@ -8,7 +8,7 @@
     <p>Vue opérationnelle des sites, équipements et interventions.</p>
   </div>
   <div class="aq-page-actions">
-    <a class="btn btn-outline-primary" href="{% url 'infrastructure:work_create' %}"><i class="bi bi-plus-lg"></i>Intervention</a>
+    {% if perms.infrastructure.add_maintenancework %}<a class="btn btn-outline-primary" href="{% url 'infrastructure:work_create' %}"><i class="bi bi-plus-lg"></i>Intervention</a>{% endif %}
     <a class="btn btn-primary" href="{% url 'infrastructure:site_list' %}"><i class="bi bi-buildings"></i>Voir les sites</a>
   </div>
 </div>
@@ -50,10 +50,14 @@
   <section class="aq-panel">
     <div class="aq-panel-head"><h2><i class="bi bi-lightning-charge"></i>Actions rapides</h2></div>
     <div class="aq-actions">
-      <a class="aq-action" href="{% url 'infrastructure:site_create' %}"><i class="bi bi-building-add"></i>Nouveau site<span>Ajouter un site</span></a>
+      {% if perms.infrastructure.add_site %}<a class="aq-action" href="{% url 'infrastructure:site_create' %}"><i class="bi bi-building-add"></i>Nouveau site<span>Ajouter un site</span></a>
       <a class="aq-action" href="{% url 'infrastructure:zone_create' %}"><i class="bi bi-bounding-box"></i>Nouvelle zone<span>Découper un site</span></a>
       <a class="aq-action" href="{% url 'infrastructure:pipe_create' %}"><i class="bi bi-bezier2"></i>Canalisation<span>Ajouter au réseau</span></a>
       <a class="aq-action" href="{% url 'infrastructure:pump_create' %}"><i class="bi bi-fan"></i>Pompe<span>Ajouter au réseau</span></a>
+      {% else %}<a class="aq-action" href="{% url 'infrastructure:site_list' %}"><i class="bi bi-buildings"></i>Sites<span>Fiches et maquettes 3D</span></a>
+      <a class="aq-action" href="{% url 'infrastructure:work_list' %}"><i class="bi bi-tools"></i>Interventions<span>Maintenance</span></a>
+      <a class="aq-action" href="{% url 'consumption:meter_list' %}"><i class="bi bi-speedometer2"></i>Compteurs<span>Consommation</span></a>
+      <a class="aq-action" href="{% url 'quality_leaks:incident_list' %}"><i class="bi bi-droplet-half"></i>Incidents<span>Fuites</span></a>{% endif %}
     </div>
   </section>
 </div>

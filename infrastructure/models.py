@@ -62,16 +62,42 @@ class Site(models.Model):
         pumps = list(WaterPump.objects.filter(zone__site=self).select_related("zone"))
         return pipes + pumps
 
-    def calculate_water_balance(self, start, end) -> Decimal:
+    def calculate_water_balance(self, start, end) -> dict:
         """
-        Bilan hydrique = volume entré sur le site − somme des volumes comptés par zone.
+        Bilan hydrique du site entre deux instants, d'après les relevés réels des compteurs (sans interpolation).
 
-        Dépend des compteurs et relevés du module consumption (Student 2) et d'un
-        compteur général d'arrivée, qui n'existe pas encore dans le modèle.
+        Renvoie {"total_m3", "zones": [{"zone", "volume_m3", "meters": [...]}], "unmetered_zones": [...],
+        "covered_from", "covered_to", "losses_m3"}. Chaque compteur utilise le dernier relevé avant chaque
+        borne : les dates réellement couvertes sont indiquées.
+
+        Les PERTES (eau entrée − eau comptée) demandent un compteur général d'arrivée, absent du modèle :
+        losses_m3 vaut donc None. Les zones sans compteur sont listées : leur consommation n'est pas mesurée.
         """
-        raise NotImplementedError(
-            "calculate_water_balance() attend les compteurs de Student 2 et un compteur général d'arrivée."
-        )
+        from django.apps import apps
+
+        WaterMeter = apps.get_model("consumption", "WaterMeter")
+        zones, unmetered, total = [], [], Decimal("0")
+        covered = []
+        for zone in self.zones.all().order_by("code"):
+            meters = list(WaterMeter.objects.filter(zone=zone, active=True))
+            if not meters:
+                unmetered.append(zone)
+                continue
+            rows, zone_total = [], Decimal("0")
+            for meter in meters:
+                result = meter.volume_between(start, end)
+                if result is None:
+                    rows.append({"meter": meter, "volume_m3": None})
+                    continue
+                volume, first, last = result
+                zone_total += volume
+                covered += [first.recorded_at, last.recorded_at]
+                rows.append({"meter": meter, "volume_m3": volume, "from": first.recorded_at, "to": last.recorded_at})
+            total += zone_total
+            zones.append({"zone": zone, "volume_m3": zone_total, "meters": rows})
+        return {"start": start, "end": end, "total_m3": total, "zones": zones, "unmetered_zones": unmetered,
+                "covered_from": min(covered) if covered else None, "covered_to": max(covered) if covered else None,
+                "losses_m3": None}
 
 
 class WaterZone(models.Model):

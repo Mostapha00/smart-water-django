@@ -1,2 +1,27 @@
 {% extends "base.html" %}
-{% block content %}<div class="d-flex justify-content-between align-items-center"><h1>Audits archivés</h1><a class="btn btn-primary" href="{% url 'sustainability:audit_report' %}">Générer un audit</a></div><div class="list-group mt-3">{% for report in reports %}<a class="list-group-item list-group-item-action" href="{% url 'sustainability:audit_pdf' report.pk %}">Audit {{ report.period_start }} – {{ report.period_end }} · {{ report.site|default:"Tous les sites" }}</a>{% empty %}<p class="text-muted">Aucun audit archivé.</p>{% endfor %}</div>{% endblock %}
+{% block title %}Audits · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'sustainability:dashboard' %}">Durabilité &amp; BI</a><i class="bi bi-chevron-right"></i><span>Audits</span></div>
+    <h1>Rapports d'audit</h1>
+    <p>Chaque rapport garde les indicateurs calculés le jour de sa création.</p>
+  </div>
+  {% if perms.sustainability.add_auditreport %}<div class="aq-page-actions"><a class="btn btn-primary" href="{% url 'sustainability:audit_report' %}"><i class="bi bi-file-earmark-plus"></i>Générer un audit</a></div>{% endif %}
+</div>
+<section class="aq-panel">
+  {% if reports %}
+  <div class="table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th>Période</th><th>Site</th><th class="text-end">Consommation</th><th class="text-end">Fuites actives</th><th>Créé</th><th></th></tr></thead>
+    <tbody>{% for report in reports %}
+      <tr><td>{{ report.period_start|date:"d/m/Y" }} → {{ report.period_end|date:"d/m/Y" }}</td>
+        <td>{% if report.site %}{{ report.site.name }}{% else %}Tous les sites{% endif %}</td>
+        <td class="text-end">{% if "consumption_m3" in report.snapshot %}{{ report.snapshot.consumption_m3|floatformat:0 }} m³{% else %}—{% endif %}</td>
+        <td class="text-end">{% if "active_leaks" in report.snapshot %}{{ report.snapshot.active_leaks }}{% else %}—{% endif %}</td>
+        <td>{{ report.created_at|date:"d/m/Y H:i" }}{% if report.generated_by %} · {{ report.generated_by }}{% endif %}</td>
+        <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'sustainability:audit_pdf' report.pk %}"><i class="bi bi-download me-1"></i>PDF</a></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="aq-empty"><i class="bi bi-clipboard-check"></i>Aucun audit archivé.</div>{% endif %}
+</section>
+{% endblock %}

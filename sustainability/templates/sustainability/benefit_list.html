@@ -1,2 +1,25 @@
-{% extends "sustainability/list.html" %}
-{% block content %}<div class="d-flex justify-content-between"><h1>Bénéfices mesurés</h1><a class="btn btn-primary" href="{% url 'sustainability:benefit_create' %}">Nouveau bénéfice</a></div><div class="list-group mt-3">{% for object in objects %}<a class="list-group-item list-group-item-action" href="{{ object.get_absolute_url }}">{{ object.project }} · {{ object.measured_savings_m3 }} m³ {% if object.verified %}✓{% endif %}</a>{% empty %}<p>Aucun bénéfice.</p>{% endfor %}</div>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Bénéfices mesurés · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'sustainability:dashboard' %}">Durabilité &amp; BI</a><i class="bi bi-chevron-right"></i><span>Bénéfices</span></div>
+    <h1>Bénéfices mesurés</h1>
+    <p>Économies constatées après un projet (étape « mesurer »), séparées des économies seulement estimées.</p>
+  </div>
+  {% if perms.sustainability.add_measuredbenefit %}<div class="aq-page-actions"><a class="btn btn-primary" href="{% url 'sustainability:benefit_create' %}"><i class="bi bi-plus-lg"></i>Nouveau bénéfice</a></div>{% endif %}
+</div>
+<section class="aq-panel">
+  {% if objects %}
+  <div class="table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th>Projet</th><th>Période</th><th class="text-end">Eau économisée</th><th class="text-end">Gain</th><th>Vérification</th></tr></thead>
+    <tbody>{% for b in objects %}
+      <tr><td><a class="fw-semibold" href="{{ b.get_absolute_url }}">{{ b.project.name }}</a><div class="small text-body-secondary">{{ b.project.site.name }}</div></td>
+        <td>{{ b.period_start|date:"d/m/Y" }} → {{ b.period_end|date:"d/m/Y" }}</td>
+        <td class="text-end">{{ b.measured_savings_m3|floatformat:0 }} m³</td><td class="text-end">{{ b.measured_savings_tnd|floatformat:0 }} TND</td>
+        <td>{% if b.verified %}<span class="aq-pill green">vérifié</span>{% else %}<span class="aq-pill amber">à vérifier</span>{% endif %}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="aq-empty"><i class="bi bi-graph-up-arrow"></i>Aucun bénéfice mesuré.</div>{% endif %}
+</section>
+{% endblock %}

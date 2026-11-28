@@ -1,2 +1,25 @@
-{% extends "sustainability/list.html" %}
-{% block content %}<div class="d-flex justify-content-between"><h1>Cibles de conservation</h1><a class="btn btn-primary" href="{% url 'sustainability:target_create' %}">Nouvelle cible</a></div><div class="list-group mt-3">{% for object in objects %}<a class="list-group-item list-group-item-action" href="{{ object.get_absolute_url }}">{{ object.name }} · {{ object.target_reduction_percent }}% · {{ object.target_m3 }} m³</a>{% empty %}<p>Aucune cible.</p>{% endfor %}</div>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Cibles de conservation · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'sustainability:dashboard' %}">Durabilité &amp; BI</a><i class="bi bi-chevron-right"></i><span>Cibles</span></div>
+    <h1>Cibles de conservation</h1>
+    <p>Objectifs de réduction de la consommation, par site et par période.</p>
+  </div>
+  {% if perms.sustainability.add_conservationtarget %}<div class="aq-page-actions"><a class="btn btn-primary" href="{% url 'sustainability:target_create' %}"><i class="bi bi-plus-lg"></i>Nouvelle cible</a></div>{% endif %}
+</div>
+<section class="aq-panel">
+  {% if objects %}
+  <div class="table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th>Cible</th><th>Site</th><th>Période</th><th class="text-end">Référence</th><th class="text-end">Réduction</th><th class="text-end">Objectif</th></tr></thead>
+    <tbody>{% for t in objects %}
+      <tr><td><a class="fw-semibold" href="{{ t.get_absolute_url }}">{{ t.name }}</a>{% if t.department %}<div class="small text-body-secondary">{{ t.department }}</div>{% endif %}</td>
+        <td>{{ t.site.name }}</td><td>{{ t.period_start|date:"d/m/Y" }} → {{ t.period_end|date:"d/m/Y" }}</td>
+        <td class="text-end">{{ t.baseline_m3|floatformat:0 }} m³</td><td class="text-end">−{{ t.target_reduction_percent|floatformat:"-1" }} %</td>
+        <td class="text-end fw-semibold">{{ t.target_m3|floatformat:0 }} m³</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="aq-empty"><i class="bi bi-bullseye"></i>Aucune cible.</div>{% endif %}
+</section>
+{% endblock %}

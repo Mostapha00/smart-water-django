@@ -8,17 +8,17 @@
     <p>Surveillance des analyses, alertes et incidents.</p>
   </div>
   <div class="aq-page-actions">
-    <a class="btn btn-outline-primary" href="{% url 'quality_leaks:test_create' %}"><i class="bi bi-eyedropper"></i>Nouveau test</a>
-    <a class="btn btn-primary" href="{% url 'quality_leaks:incident_create' %}"><i class="bi bi-plus-lg"></i>Nouvel incident</a>
+    {% if perms.quality_leaks.add_waterqualitytest %}<a class="btn btn-outline-primary" href="{% url 'quality_leaks:test_create' %}"><i class="bi bi-eyedropper"></i>Nouvelle analyse</a>{% endif %}
+    {% if perms.quality_leaks.add_leakincident %}<a class="btn btn-primary" href="{% url 'quality_leaks:incident_create' %}"><i class="bi bi-plus-lg"></i>Nouvel incident</a>{% endif %}
   </div>
 </div>
 
 <div class="aq-kpis">
-  <a class="aq-kpi red{% if active_incidents %} alert{% endif %}" href="{% url 'quality_leaks:incident_list' %}">
+  <a class="aq-kpi red{% if active_incidents %} alert{% endif %}" href="{% url 'quality_leaks:incident_list' %}?etat=investigation">
     <span class="aq-kpi-icon"><i class="bi bi-droplet-half"></i></span>
     <div class="aq-kpi-body"><div class="aq-kpi-label">Incidents actifs</div><div class="aq-kpi-value">{{ active_incidents }}</div><div class="aq-kpi-foot">en investigation</div></div>
   </a>
-  <a class="aq-kpi green" href="{% url 'quality_leaks:incident_list' %}">
+  <a class="aq-kpi green" href="{% url 'quality_leaks:incident_list' %}?etat=resolved">
     <span class="aq-kpi-icon"><i class="bi bi-check2-circle"></i></span>
     <div class="aq-kpi-body"><div class="aq-kpi-label">Incidents résolus</div><div class="aq-kpi-value">{{ resolved_incidents }}</div><div class="aq-kpi-foot">clôturés</div></div>
   </a>
@@ -40,7 +40,7 @@
       <a class="aq-row" href="{% url 'quality_leaks:incident_detail' incident.pk %}">
         <span class="aq-row-icon"><i class="bi bi-droplet"></i></span>
         <div class="aq-row-main"><div class="aq-row-title">{{ incident.reference|default:"Incident" }}</div><div class="aq-row-sub">Ouvert le {{ incident.opened_at|date:"d M Y, H:i" }}{% if incident.description %} · {{ incident.description|truncatechars:60 }}{% endif %}</div></div>
-        <span class="aq-pill {% if incident.status == 'resolved' %}green{% else %}red{% endif %}">{% if incident.status == 'resolved' %}Résolu{% else %}Investigation{% endif %}</span>
+        <span class="aq-pill {% if incident.is_open %}red{% else %}green{% endif %}">{{ incident.status_label }}</span>
       </a>
       {% empty %}
       <div class="aq-empty"><i class="bi bi-shield-check"></i>Aucun incident signalé.</div>
@@ -53,7 +53,7 @@
       <a class="aq-action" href="{% url 'quality_leaks:incident_list' %}"><i class="bi bi-list-ul"></i>Incidents<span>Suivi des fuites</span></a>
       <a class="aq-action" href="{% url 'quality_leaks:test_list' %}"><i class="bi bi-eyedropper"></i>Tests qualité<span>Analyses d'eau</span></a>
       <a class="aq-action" href="{% url 'quality_leaks:rule_list' %}"><i class="bi bi-sliders"></i>Règles<span>Seuils d'alerte</span></a>
-      <a class="aq-action" href="{% url 'quality_leaks:rule_create' %}"><i class="bi bi-plus-circle"></i>Nouvelle règle<span>Créer une alerte</span></a>
+      {% if perms.quality_leaks.add_alertrule %}<a class="aq-action" href="{% url 'quality_leaks:rule_create' %}"><i class="bi bi-plus-circle"></i>Nouvelle règle<span>Créer une alerte</span></a>{% else %}<a class="aq-action" href="{% url 'consumption:meter_list' %}"><i class="bi bi-speedometer2"></i>Compteurs<span>Fuites possibles</span></a>{% endif %}
     </div>
   </section>
 </div>

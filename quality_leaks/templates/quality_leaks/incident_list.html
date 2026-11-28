@@ -1,5 +1,34 @@
 {% extends "base.html" %}
+{% block title %}Incidents · AquaMind{% endblock %}
 {% block content %}
-<h1>Incidents de fuite</h1>
-<ul>{% for incident in incidents %}<li><a href="{% url 'quality_leaks:incident_detail' incident.pk %}">{{ incident.reference }}</a> — {{ incident.status }}</li>{% empty %}<li>Aucun incident.</li>{% endfor %}</ul>
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'quality_leaks:dashboard' %}">Qualité &amp; fuites</a><i class="bi bi-chevron-right"></i><span>Incidents</span></div>
+    <h1>Incidents</h1>
+    <p>Fuites possibles et analyses non conformes, de l'ouverture à la résolution.</p>
+  </div>
+  {% if perms.quality_leaks.add_leakincident %}<div class="aq-page-actions"><a class="btn btn-primary" href="{% url 'quality_leaks:incident_create' %}"><i class="bi bi-plus-lg"></i>Nouvel incident</a></div>{% endif %}
+</div>
+<div class="aq-tabs">
+  <a class="btn btn-sm {% if not state %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="?">Tous</a>
+  <a class="btn btn-sm {% if state == 'investigation' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="?etat=investigation">En investigation</a>
+  <a class="btn btn-sm {% if state == 'resolved' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="?etat=resolved">Résolus</a>
+</div>
+<section class="aq-panel">
+  {% if incidents %}
+  <div class="table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th>Référence</th><th>Statut</th><th>Source</th><th>Équipement suspecté</th><th>Technicien</th><th>Ouvert le</th></tr></thead>
+    <tbody>{% for incident in incidents %}
+      <tr>
+        <td><a class="mono fw-semibold" href="{{ incident.get_absolute_url }}">{{ incident.reference }}</a></td>
+        <td><span class="aq-pill {% if incident.is_open %}red{% else %}green{% endif %}">{{ incident.status_label }}</span></td>
+        <td>{% if incident.meter %}<i class="bi bi-speedometer2 me-1"></i>{{ incident.meter }}{% endif %}{% if incident.meter and incident.trigger_test %}<br>{% endif %}{% if incident.trigger_test %}<i class="bi bi-eyedropper me-1"></i>Analyse {{ incident.trigger_test.zone.name }}{% endif %}{% if not incident.meter and not incident.trigger_test %}<span class="text-body-secondary">—</span>{% endif %}</td>
+        <td>{% if incident.suspected_asset %}<a class="mono" href="{{ incident.suspected_asset.get_absolute_url }}">{{ incident.suspected_asset }}</a>{% else %}<span class="text-body-secondary">à identifier</span>{% endif %}</td>
+        <td>{{ incident.technician|default:"—" }}</td>
+        <td>{{ incident.opened_at|date:"d/m/Y H:i" }}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="aq-empty"><i class="bi bi-shield-check"></i>Aucun incident.</div>{% endif %}
+</section>
 {% endblock %}

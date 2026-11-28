@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ object.name }} · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'sustainability:dashboard' %}">Durabilité &amp; BI</a><i class="bi bi-chevron-right"></i><a href="{% url 'sustainability:project_list' %}">Projets</a><i class="bi bi-chevron-right"></i><span>{{ object.name }}</span></div>
+    <h1>{{ object.name }}</h1>
+    <p><a href="{{ object.site.get_absolute_url }}">{{ object.site.name }}</a> · {{ object.get_project_type_display }} · <span class="aq-pill {% if object.status == 'completed' %}green{% elif object.status == 'cancelled' %}red{% else %}blue{% endif %}">{{ object.get_status_display }}</span></p>
+  </div>
+  <div class="aq-page-actions">
+    {% if perms.sustainability.add_measuredbenefit %}<a class="btn btn-primary" href="{% url 'sustainability:benefit_create' %}?project={{ object.pk }}"><i class="bi bi-graph-up-arrow"></i>Mesurer un bénéfice</a>{% endif %}
+    {% if perms.sustainability.change_sustainabilityproject %}<a class="btn btn-outline-secondary" href="{% url 'sustainability:project_update' object.pk %}"><i class="bi bi-pencil"></i>Modifier</a>{% endif %}
+    {% if perms.sustainability.delete_sustainabilityproject %}<a class="btn btn-outline-danger" href="{% url 'sustainability:project_delete' object.pk %}"><i class="bi bi-trash"></i>Supprimer</a>{% endif %}
+  </div>
+</div>
+<div class="aq-grid-2">
+  <section class="aq-panel">
+    <div class="aq-panel-head"><h2><i class="bi bi-info-circle"></i>Estimation</h2></div>
+    <dl class="aq-dl">
+      <dt>Budget</dt><dd>{{ object.budget_tnd|floatformat:0 }} TND</dd>
+      <dt>Économie attendue</dt><dd>{{ object.expected_savings_m3|floatformat:0 }} m³/an · {{ object.expected_annual_savings_tnd|floatformat:0 }} TND/an</dd>
+      <dt>Retour sur investissement</dt><dd>{% if object.payback_months is not None %}{{ object.payback_months }} mois{% else %}— (économie en TND non renseignée){% endif %}</dd>
+      <dt>Calendrier</dt><dd>{{ object.start_date|date:"d/m/Y"|default:"?" }} → {{ object.completion_date|date:"d/m/Y"|default:"?" }}</dd>
+      {% if object.description %}<dt>Description</dt><dd>{{ object.description|linebreaksbr }}</dd>{% endif %}
+    </dl>
+  </section>
+  <section class="aq-panel">
+    <div class="aq-panel-head"><h2><i class="bi bi-graph-up-arrow"></i>Bénéfices mesurés</h2></div>
+    <div class="aq-panel-body">
+      {% for b in object.benefits.all %}
+      <a class="aq-row" href="{{ b.get_absolute_url }}"><span class="aq-row-icon"><i class="bi bi-droplet"></i></span>
+        <div class="aq-row-main"><div class="aq-row-title">{{ b.measured_savings_m3|floatformat:0 }} m³ · {{ b.measured_savings_tnd|floatformat:0 }} TND</div><div class="aq-row-sub">{{ b.period_start|date:"d/m/Y" }} → {{ b.period_end|date:"d/m/Y" }}</div></div>
+        <span class="aq-pill {% if b.verified %}green{% else %}amber{% endif %}">{% if b.verified %}vérifié{% else %}à vérifier{% endif %}</span></a>
+      {% empty %}<div class="aq-empty"><i class="bi bi-hourglass"></i>Aucune mesure : l'économie reste une estimation.</div>{% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

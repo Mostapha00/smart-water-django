@@ -250,6 +250,15 @@ a.aq-row:hover { background: var(--aq-bg); }
 .aq-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .aq-pill.red { background: #fde9e6; color: #c4402f; }
 .aq-pill.green { background: #e3f5ec; color: #1f8a5b; }
+.aq-pill.blue { background: var(--aq-accent-50); color: var(--aq-accent-600); }
+.aq-pill.violet { background: #f0ebfb; color: #6a4fb3; }
+.aq-pill.amber { background: #fdf3e1; color: #a66a0b; }
+.aq-dl { display: grid; grid-template-columns: minmax(140px, 38%) 1fr; gap: 8px 16px; margin: 0; padding: 18px 20px; }
+.aq-dl dt { color: var(--aq-muted); font-weight: 500; }
+.aq-dl dd { margin: 0; }
+.aq-panel .table { --bs-table-bg: transparent; }
+.aq-panel .table th { color: var(--aq-muted); font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
+.aq-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
 
 /* Quick actions */
 .aq-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }

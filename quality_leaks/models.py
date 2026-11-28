@@ -1,6 +1,7 @@
 """Water quality measurements, alert rules, and leak investigations."""
 from decimal import Decimal
 import operator
+from uuid import uuid4
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -83,7 +84,7 @@ class AlertRule(models.Model):
 
 
 class LeakIncident(models.Model):
-    STATUS_CHOICES = [("investigation", "Investigation"), ("resolved", "Resolved")]
+    STATUS_CHOICES = [("investigation", "En investigation"), ("resolved", "Résolu")]
 
     reference = models.CharField(max_length=40, unique=True, blank=True)
     meter_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True)
@@ -122,7 +123,9 @@ class LeakIncident(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.reference:
-            self.reference = f"LI-{timezone.now():%Y%m%d%H%M%S}"
+            # Suffixe aléatoire : deux incidents ouverts dans la même seconde (analyse en lot)
+            # avaient la même référence et faisaient échouer l'enregistrement.
+            self.reference = f"LI-{timezone.now():%Y%m%d}-{uuid4().hex[:6].upper()}"
         self.full_clean()
         return super().save(*args, **kwargs)
 
@@ -146,6 +149,22 @@ class LeakIncident(models.Model):
         if save:
             self.save(update_fields=["status", "resolved_at"])
         return self
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse("quality_leaks:incident_detail", args=[self.pk])
+
+    @property
+    def is_open(self):
+        return self.status != "resolved"
+
+    @property
+    def status_label(self):
+        return dict(self.STATUS_CHOICES).get(self.status, self.status)
+
+    @property
+    def suspected_asset(self):
+        return self.suspected_pipe or self.suspected_pump
 
     def __str__(self):
         return self.reference or f"Leak incident {self.pk}"

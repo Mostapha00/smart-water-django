@@ -1,6 +1,33 @@
 {% extends "base.html" %}
 {% load aquamind_ml %}
+{% block title %}Analyses d'eau · AquaMind{% endblock %}
 {% block content %}
-<h1>Analyses de qualité</h1>
-<ul>{% for test in tests %}<li>{{ test.zone }} — {{ test.sampled_at }} — {{ test.potability_probability|default:"non classifiée" }} {% ml_badge test.model_version %}</li>{% empty %}<li>Aucune analyse.</li>{% endfor %}</ul>
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'quality_leaks:dashboard' %}">Qualité &amp; fuites</a><i class="bi bi-chevron-right"></i><span>Analyses</span></div>
+    <h1>Analyses d'eau</h1>
+    <p>Mesures de laboratoire, indice de potabilité et règles d'alerte enfreintes. La conformité reste confirmée par le laboratoire.</p>
+  </div>
+  {% if perms.quality_leaks.add_waterqualitytest %}<div class="aq-page-actions"><a class="btn btn-primary" href="{% url 'quality_leaks:test_create' %}"><i class="bi bi-plus-lg"></i>Nouvelle analyse</a></div>{% endif %}
+</div>
+<section class="aq-panel">
+  {% if rows %}
+  <div class="table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th>Prélevé le</th><th>Zone</th><th class="text-end">pH</th><th class="text-end">Turbidité</th><th class="text-end">Chlore</th><th class="text-end">Conductivité</th><th>Potabilité</th><th>Règles enfreintes</th></tr></thead>
+    <tbody>{% for row in rows %}{% with t=row.test %}
+      <tr>
+        <td>{{ t.sampled_at|date:"d/m/Y" }}<div class="small text-body-secondary">{{ t.laboratory|default:"" }}</div></td>
+        <td>{{ t.zone.site.name }} · {{ t.zone.name }}</td>
+        <td class="text-end">{{ t.ph|default_if_none:"—" }}</td>
+        <td class="text-end">{% if t.turbidity_ntu is not None %}{{ t.turbidity_ntu }} NTU{% else %}—{% endif %}</td>
+        <td class="text-end">{% if t.chlorine_mg_l is not None %}{{ t.chlorine_mg_l }} mg/L{% else %}—{% endif %}</td>
+        <td class="text-end">{% if t.conductivity_us_cm is not None %}{{ t.conductivity_us_cm|floatformat:0 }} µS/cm{% else %}—{% endif %}</td>
+        <td>{% if t.potability_probability is not None %}{% widthratio t.potability_probability 1 100 %} % {% ml_badge t.model_version %}{% else %}—{% endif %}</td>
+        <td>{% for rule in row.matched %}<span class="aq-pill {% if rule.severity == 'critical' %}red{% else %}amber{% endif %}">{{ rule.name }}</span> {% empty %}<span class="text-body-secondary small">aucune</span>{% endfor %}</td>
+      </tr>
+    {% endwith %}{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="aq-empty"><i class="bi bi-eyedropper"></i>Aucune analyse.</div>{% endif %}
+</section>
+<p class="small text-body-secondary mt-2">Potabilité = part des 4 mesures dans les seuils usuels (pH 6,5–8,5 ; turbidité ≤ 5 NTU ; chlore 0,2–0,5 mg/L ; conductivité ≤ 2 500 µS/cm). Ce n'est pas un avis de laboratoire.</p>
 {% endblock %}

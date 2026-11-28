@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Bénéfice · {{ object.project.name }} · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'sustainability:dashboard' %}">Durabilité &amp; BI</a><i class="bi bi-chevron-right"></i><a href="{% url 'sustainability:benefit_list' %}">Bénéfices</a><i class="bi bi-chevron-right"></i><span>{{ object.period_start|date:"d/m/Y" }}</span></div>
+    <h1>Bénéfice mesuré</h1>
+    <p>Projet <a href="{{ object.project.get_absolute_url }}">{{ object.project.name }}</a> · {{ object.period_start|date:"d/m/Y" }} → {{ object.period_end|date:"d/m/Y" }}</p>
+  </div>
+  <div class="aq-page-actions">
+    {% if perms.sustainability.change_measuredbenefit %}<a class="btn btn-outline-secondary" href="{% url 'sustainability:benefit_update' object.pk %}"><i class="bi bi-pencil"></i>Modifier</a>{% endif %}
+    {% if perms.sustainability.delete_measuredbenefit %}<a class="btn btn-outline-danger" href="{% url 'sustainability:benefit_delete' object.pk %}"><i class="bi bi-trash"></i>Supprimer</a>{% endif %}
+  </div>
+</div>
+<section class="aq-panel" style="max-width: 760px">
+  <dl class="aq-dl">
+    <dt>Eau économisée</dt><dd>{{ object.measured_savings_m3|floatformat:0 }} m³</dd>
+    <dt>Gain financier</dt><dd>{{ object.measured_savings_tnd|floatformat:0 }} TND</dd>
+    <dt>Attendu par le projet</dt><dd>{{ object.project.expected_savings_m3|floatformat:0 }} m³/an</dd>
+    <dt>Vérification</dt><dd>{% if object.verified %}<span class="aq-pill green">vérifié</span>{% else %}<span class="aq-pill amber">à vérifier</span>{% endif %}</dd>
+    <dt>Justificatif</dt><dd>{{ object.evidence|linebreaksbr|default:"—" }}</dd>
+  </dl>
+</section>
+{% endblock %}

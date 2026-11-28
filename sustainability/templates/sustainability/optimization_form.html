@@ -1,2 +1,14 @@
-{% extends "base.html" %}
-{% block content %}<h1>Optimisation budget / économies</h1><form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary">Lancer l'optimisation</button></form>{% endblock %}
+{% extends "aquamind/form.html" %}
+{% block after_form %}
+<section class="aq-panel mt-4" style="max-width: 920px">
+  <div class="aq-panel-head"><h2><i class="bi bi-clock-history"></i>Optimisations précédentes</h2></div>
+  <div class="aq-panel-body">
+    {% for run in recent_runs %}
+    <a class="aq-row" href="{{ run.get_absolute_url }}"><span class="aq-row-icon"><i class="bi bi-calculator"></i></span>
+      <div class="aq-row-main"><div class="aq-row-title">{% if run.site %}{{ run.site.name }}{% else %}Tous les sites{% endif %} · budget {{ run.budget_tnd|floatformat:0 }} TND</div>
+        <div class="aq-row-sub">{{ run.created_at|date:"d/m/Y H:i" }} · {{ run.recommendations|length }} projet(s) · {{ run.solver }}</div></div>
+      <div class="aq-row-end">{{ run.projected_savings_m3|floatformat:0 }}<small>m³</small></div></a>
+    {% empty %}<div class="aq-empty"><i class="bi bi-calculator"></i>Aucune optimisation lancée.</div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

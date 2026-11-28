@@ -9,9 +9,11 @@ urlpatterns = [
     path("incidents/", IncidentListView.as_view(), name="incident_list"),
     path("incidents/nouveau/", views.incident_create, name="incident_create"),
     path("incidents/<int:pk>/", IncidentDetailView.as_view(), name="incident_detail"),
+    path("incidents/<int:pk>/modifier/", views.incident_update, name="incident_update"),
     path("incidents/<int:pk>/resoudre/", incident_resolve, name="incident_resolve"),
     path("tests/", QualityTestListView.as_view(), name="test_list"),
     path("tests/nouveau/", views.quality_test_create, name="test_create"),
     path("regles/", views.rule_list, name="rule_list"),
     path("regles/nouvelle/", views.rule_create, name="rule_create"),
+    path("regles/<int:pk>/modifier/", views.rule_update, name="rule_update"),
 ]

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% comment %}
+Page de formulaire commune. Contexte attendu (fourni par les vues) :
+  page_title, module_label, module_url, cancel_url (optionnel), submit_label (optionnel), form_enctype (optionnel)
+{% endcomment %}
+{% block title %}{% firstof page_title "Formulaire" %} · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i>{% if module_url %}<a href="{{ module_url }}">{{ module_label }}</a><i class="bi bi-chevron-right"></i>{% endif %}<span>{{ page_title }}</span></div>
+    <h1>{% firstof page_title "Formulaire" %}</h1>
+    {% if page_intro %}<p>{{ page_intro }}</p>{% endif %}
+  </div>
+</div>
+<section class="aq-panel" style="max-width: 920px">
+  <div class="aq-panel-body p-4">
+    <form method="post" novalidate{% if form_enctype %} enctype="{{ form_enctype }}"{% endif %}>{% csrf_token %}
+      {% include "aquamind/_fields.html" %}
+      <div class="d-flex gap-2 mt-4">
+        <button class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{% firstof submit_label "Enregistrer" %}</button>
+        <a class="btn btn-outline-secondary" href="{% firstof cancel_url module_url "/" %}">Annuler</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% block after_form %}{% endblock %}
+{% endblock %}

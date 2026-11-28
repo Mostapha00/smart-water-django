@@ -1,2 +1,30 @@
-{% extends "sustainability/list.html" %}
-{% block content %}<div class="d-flex justify-content-between"><h1>Projets durables</h1><a class="btn btn-primary" href="{% url 'sustainability:project_create' %}">Nouveau projet</a></div><div class="list-group mt-3">{% for object in objects %}<a class="list-group-item list-group-item-action" href="{{ object.get_absolute_url }}">{{ object.name }} · {{ object.budget_tnd }} TND · {{ object.expected_savings_m3 }} m³</a>{% empty %}<p>Aucun projet.</p>{% endfor %}</div>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Projets · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'sustainability:dashboard' %}">Durabilité &amp; BI</a><i class="bi bi-chevron-right"></i><span>Projets</span></div>
+    <h1>Projets d'économie d'eau</h1>
+    <p>Réfection, recyclage des eaux grises, eaux pluviales, équipements bas débit.</p>
+  </div>
+  <div class="aq-page-actions">
+    {% if perms.sustainability.add_optimizationrun %}<a class="btn btn-outline-primary" href="{% url 'sustainability:optimize' %}"><i class="bi bi-calculator"></i>Optimiser le budget</a>{% endif %}
+    {% if perms.sustainability.add_sustainabilityproject %}<a class="btn btn-primary" href="{% url 'sustainability:project_create' %}"><i class="bi bi-plus-lg"></i>Nouveau projet</a>{% endif %}
+  </div>
+</div>
+<section class="aq-panel">
+  {% if objects %}
+  <div class="table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th>Projet</th><th>Site</th><th>Statut</th><th class="text-end">Budget</th><th class="text-end">Économie attendue</th><th class="text-end">Retour sur invest.</th></tr></thead>
+    <tbody>{% for p in objects %}
+      <tr><td><a class="fw-semibold" href="{{ p.get_absolute_url }}">{{ p.name }}</a><div class="small text-body-secondary">{{ p.get_project_type_display }}</div></td>
+        <td>{{ p.site.name }}</td>
+        <td><span class="aq-pill {% if p.status == 'completed' %}green{% elif p.status == 'cancelled' %}red{% elif p.status == 'proposed' %}{% else %}blue{% endif %}">{{ p.get_status_display }}</span></td>
+        <td class="text-end">{{ p.budget_tnd|floatformat:0 }} TND</td>
+        <td class="text-end">{{ p.expected_savings_m3|floatformat:0 }} m³ · {{ p.expected_annual_savings_tnd|floatformat:0 }} TND/an</td>
+        <td class="text-end">{% if p.payback_months is not None %}{{ p.payback_months }} mois{% else %}—{% endif %}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="aq-empty"><i class="bi bi-kanban"></i>Aucun projet.</div>{% endif %}
+</section>
+{% endblock %}

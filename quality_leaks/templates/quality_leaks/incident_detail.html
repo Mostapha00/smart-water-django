@@ -1,11 +1,45 @@
 {% extends "base.html" %}
+{% block title %}{{ incident.reference }} · AquaMind{% endblock %}
 {% block content %}
-<h1>{{ incident.reference }}</h1>
-<p>{{ incident.description }}</p>
-<p>Statut : {{ incident.status }} · Ouvert le {{ incident.opened_at }}</p>
-{% if incident.status != "resolved" %}
-<form method="post" action="{% url 'quality_leaks:incident_resolve' incident.pk %}">
-  {% csrf_token %}<button class="btn btn-success">Marquer comme résolu</button>
-</form>
-{% endif %}
+{% with asset=incident.suspected_asset %}
+<div class="aq-page-head">
+  <div>
+    <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{% url 'quality_leaks:dashboard' %}">Qualité &amp; fuites</a><i class="bi bi-chevron-right"></i><a href="{% url 'quality_leaks:incident_list' %}">Incidents</a><i class="bi bi-chevron-right"></i><span>{{ incident.reference }}</span></div>
+    <h1 class="mono">{{ incident.reference }}</h1>
+    <p><span class="aq-pill {% if incident.is_open %}red{% else %}green{% endif %}">{{ incident.status_label }}</span> · ouvert le {{ incident.opened_at|date:"d/m/Y H:i" }}{% if incident.resolved_at %} · résolu le {{ incident.resolved_at|date:"d/m/Y H:i" }}{% endif %}</p>
+  </div>
+  <div class="aq-page-actions">
+    {% if perms.quality_leaks.change_leakincident %}
+      <a class="btn btn-outline-secondary" href="{% url 'quality_leaks:incident_update' incident.pk %}"><i class="bi bi-pencil"></i>Compléter</a>
+      {% if incident.is_open %}<form method="post" action="{% url 'quality_leaks:incident_resolve' incident.pk %}" class="m-0">{% csrf_token %}<button class="btn btn-success"><i class="bi bi-check2-circle"></i>Marquer comme résolu</button></form>{% endif %}
+    {% endif %}
+    {% if asset and perms.infrastructure.add_maintenancework %}<a class="btn btn-primary" href="{% url 'infrastructure:work_create' %}?{{ asset.kind }}={{ asset.pk }}&amp;type=corrective"><i class="bi bi-tools"></i>Planifier la réparation</a>{% endif %}
+  </div>
+</div>
+
+{% if incident.description %}<div class="alert alert-{% if incident.is_open %}warning{% else %}light border{% endif %}">{{ incident.description }}</div>{% endif %}
+
+<div class="aq-grid-2">
+  <section class="aq-panel">
+    <div class="aq-panel-head"><h2><i class="bi bi-info-circle"></i>Détails</h2></div>
+    <dl class="aq-dl">
+      <dt>Compteur</dt><dd>{% if incident.meter %}<a class="mono" href="{% url 'consumption:meter_detail' incident.meter.pk %}">{{ incident.meter }}</a> · {{ incident.meter.zone }}{% else %}—{% endif %}</dd>
+      <dt>Analyse déclencheuse</dt><dd>{% if incident.trigger_test %}{{ incident.trigger_test }}{% else %}—{% endif %}</dd>
+      <dt>Règle d'alerte</dt><dd>{% if incident.rule %}{{ incident.rule.name }} <span class="text-body-secondary small">({{ incident.rule.parameter }} {{ incident.rule.operator }} {{ incident.rule.threshold }}, v{{ incident.rule.version_code }})</span>{% else %}—{% endif %}</dd>
+      <dt>Équipement suspecté</dt><dd>{% if asset %}<a class="mono" href="{{ asset.get_absolute_url }}">{{ asset }}</a> · {{ asset.zone }}{% if incident.suspected_pipe %} · position {{ incident.position_on_pipe }}{% endif %}{% else %}<span class="text-body-secondary">à identifier sur place</span>{% endif %}</dd>
+      <dt>Technicien</dt><dd>{{ incident.technician|default:"non assigné" }}</dd>
+      {% if asset %}<dt>Maquette 3D</dt><dd><a href="{% url 'infrastructure:site_maquette' asset.zone.site_id %}">Voir sur la maquette du site</a></dd>{% endif %}
+    </dl>
+  </section>
+  <section class="aq-panel">
+    <div class="aq-panel-head"><h2><i class="bi bi-clipboard-data"></i>Preuve enregistrée</h2></div>
+    <div class="aq-panel-body p-3">
+      {% if incident.trigger_evidence %}
+      <p class="small text-body-secondary mb-2">Valeurs copiées à l'ouverture de l'incident : elles restent valables même si la source change ensuite.</p>
+      <dl class="aq-dl p-0">{% for key, value in incident.trigger_evidence.items %}<dt class="mono small">{{ key }}</dt><dd class="small">{{ value }}</dd>{% endfor %}</dl>
+      {% else %}<div class="aq-empty"><i class="bi bi-clipboard"></i>Incident saisi manuellement, sans preuve automatique.</div>{% endif %}
+    </div>
+  </section>
+</div>
+{% endwith %}
 {% endblock %}

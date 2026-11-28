@@ -82,3 +82,18 @@ def _date(v):
     if isinstance(v, datetime):
         return (timezone.localtime(v) if timezone.is_aware(v) else v).date().isoformat()
     return v.isoformat()
+
+
+def open_incidents_for_site(site):
+    """Incidents en investigation rattachés au site (équipement suspecté, analyse ou compteur), ou [] ."""
+    LeakIncident = _model("quality_leaks", "LeakIncident")
+    WaterMeter = _model("consumption", "WaterMeter")
+    if LeakIncident is None:
+        return []
+    from django.db.models import Q
+
+    condition = Q(suspected_pipe__zone__site=site) | Q(suspected_pump__zone__site=site) | Q(trigger_test__zone__site=site)
+    if WaterMeter is not None:
+        meter_ids = list(WaterMeter.objects.filter(zone__site=site).values_list("pk", flat=True))
+        condition |= Q(meter_content_type__app_label="consumption", meter_content_type__model="watermeter", meter_object_id__in=meter_ids)
+    return list(LeakIncident.objects.filter(condition, status="investigation").distinct().order_by("-opened_at"))

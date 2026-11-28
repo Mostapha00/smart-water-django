@@ -23,6 +23,34 @@
   <div class="col-6 col-md-3"><div class="border rounded p-3 kpi"><div class="small text-body-secondary">Interventions ouvertes</div><div class="value">{{ open_works|length }}</div></div></div>
 </div>
 
+<div class="aq-grid-2 mb-4">
+  <section class="aq-panel">
+    <div class="aq-panel-head"><h2><i class="bi bi-water"></i>Consommation mesurée · 90 derniers jours</h2><a href="{% url 'consumption:meter_list' %}">Compteurs</a></div>
+    <div class="aq-panel-body">
+      {% for z in balance.zones %}
+      <div class="aq-row"><span class="aq-row-icon"><i class="bi bi-bounding-box"></i></span>
+        <div class="aq-row-main"><div class="aq-row-title">{{ z.zone.code }} · {{ z.zone.name }}</div>
+          <div class="aq-row-sub">{% for m in z.meters %}<a class="mono" href="{% url 'consumption:meter_detail' m.meter.pk %}">{{ m.meter.serial_number }}</a>{% if m.volume_m3 is None %} (pas assez de relevés){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</div></div>
+        <div class="aq-row-end">{{ z.volume_m3|floatformat:0 }}<small>m³</small></div></div>
+      {% endfor %}
+      {% if balance.zones %}<div class="aq-row"><div class="aq-row-main"><div class="aq-row-title">Total compté</div><div class="aq-row-sub">Relevés du {{ balance.covered_from|date:"d/m/Y" }} au {{ balance.covered_to|date:"d/m/Y" }}</div></div><div class="aq-row-end fw-semibold">{{ balance.total_m3|floatformat:0 }}<small>m³</small></div></div>{% endif %}
+      {% if balance.unmetered_zones %}<div class="px-3 py-2 small text-body-secondary"><i class="bi bi-exclamation-circle me-1"></i>Sans compteur (consommation non mesurée) : {% for z in balance.unmetered_zones %}{{ z.code }}{% if not forloop.last %}, {% endif %}{% endfor %}.</div>{% endif %}
+      {% if not balance.zones %}<div class="aq-empty"><i class="bi bi-speedometer2"></i>Aucun compteur sur ce site.</div>{% endif %}
+      <div class="px-3 pb-2 small text-body-secondary">Les pertes du réseau (eau entrée − eau comptée) demandent un compteur général d'arrivée, non prévu dans le modèle.</div>
+    </div>
+  </section>
+  <section class="aq-panel">
+    <div class="aq-panel-head"><h2><i class="bi bi-droplet-half"></i>Incidents en cours</h2><a href="{% url 'quality_leaks:incident_list' %}?etat=investigation">Tout voir</a></div>
+    <div class="aq-panel-body">
+      {% for incident in site_incidents %}
+      <a class="aq-row" href="{{ incident.get_absolute_url }}"><span class="aq-row-icon"><i class="bi bi-droplet"></i></span>
+        <div class="aq-row-main"><div class="aq-row-title mono">{{ incident.reference }}</div><div class="aq-row-sub">{{ incident.description|truncatechars:90 }}</div></div>
+        <span class="aq-pill red">{{ incident.status_label }}</span></a>
+      {% empty %}<div class="aq-empty"><i class="bi bi-shield-check"></i>Aucun incident en cours.</div>{% endfor %}
+    </div>
+  </section>
+</div>
+
 {% if high_risk %}
 <div class="alert alert-danger"><strong>Risque de panne élevé (≥ 60 %) :</strong>
   {% for eq in high_risk %}<a class="alert-link mono" href="{{ eq.get_absolute_url }}">{{ eq.reference }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}

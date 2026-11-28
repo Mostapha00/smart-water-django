@@ -1,2 +1,21 @@
 {% extends "base.html" %}
-{% block content %}<h1>Générer un audit PDF</h1><form method="post">{% csrf_token %}<label>Début <input type="date" name="period_start" value="{{ period_start|date:'Y-m-d' }}" class="form-control"></label><label>Fin <input type="date" name="period_end" value="{{ period_end|date:'Y-m-d' }}" class="form-control"></label><button class="btn btn-primary mt-3">Générer</button></form>{% endblock %}
+{% block title %}Générer un audit · AquaMind{% endblock %}
+{% block content %}
+<div class="aq-page-head"><div>
+  <div class="aq-crumbs"><a href="/">Accueil</a><i class="bi bi-chevron-right"></i><a href="{{ module_url }}">{{ module_label }}</a><i class="bi bi-chevron-right"></i><a href="{% url 'sustainability:audit_list' %}">Audits</a><i class="bi bi-chevron-right"></i><span>Nouveau</span></div>
+  <h1>Générer un rapport d'audit</h1>
+  <p>Rapport PDF daté : consommation de la période d'après les relevés, fuites actives, qualité de l'eau, équipements et projets.</p>
+</div></div>
+<section class="aq-panel" style="max-width: 760px"><div class="aq-panel-body p-4">
+  {% if error %}<div class="alert alert-danger py-2">{{ error }}</div>{% endif %}
+  <form method="post">{% csrf_token %}
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label" for="id_site">Site</label>
+        <select class="form-select" name="site" id="id_site"><option value="">Tous les sites</option>{% for s in sites %}<option value="{{ s.pk }}">{{ s.name }}</option>{% endfor %}</select></div>
+      <div class="col-md-3"><label class="form-label" for="id_start">Début</label><input class="form-control" type="date" id="id_start" name="period_start" value="{{ period_start|date:'Y-m-d' }}" required></div>
+      <div class="col-md-3"><label class="form-label" for="id_end">Fin</label><input class="form-control" type="date" id="id_end" name="period_end" value="{{ period_end|date:'Y-m-d' }}" required></div>
+    </div>
+    <div class="d-flex gap-2 mt-4"><button class="btn btn-primary"><i class="bi bi-file-earmark-pdf me-1"></i>Générer le PDF</button><a class="btn btn-outline-secondary" href="{% url 'sustainability:audit_list' %}">Annuler</a></div>
+  </form>
+</div></section>
+{% endblock %}
